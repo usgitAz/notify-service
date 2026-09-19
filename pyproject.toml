@@ -10,10 +10,25 @@ readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
 authors = [{ name = "Alireza sohrabi", email = "gmdevaz@gmail.com" }]
-dependencies = []
+dependencies = [
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.53.0",
+    "sqlalchemy[asyncio]>=2.0.54",
+    "asyncpg>=0.31.0",
+    "pydantic>=2.13",
+    "pydantic-settings>=2.15.0",
+    "redis>=8.1.0",
+    "aiosmtplib>=5.1.2",
+]
 
-[project.optional-dependencies]
-dev = ["ruff>=0.9.0", "pre-commit>=4.0.0"]
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "pre-commit>=4.6.2",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "ruff>=0.16.8",
+]
 
 [project.urls]
 Repository = "https://github.com/usgitAz/notify-service"
@@ -54,7 +69,7 @@ select = [
     "SIM", # flake8-simplify
 ]
 ignore = [
-    "E501", # line too long 
+    "E501", # line too long
 ]
 
 [tool.ruff.lint.isort]
