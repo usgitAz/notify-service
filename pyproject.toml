@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "notify-service"
+version = "0.1.0"
+description = "Notification as a Service (NaaS) - MVP"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Alireza sohrabi", email = "gmdevaz@gmail.com" }]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["ruff>=0.9.0", "pre-commit>=4.0.0"]
+
+[project.urls]
+Repository = "https://github.com/usgitAz/notify-service"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["app*"]
+
+# Ruff Configuration
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+fix = true
+show-fixes = true
+
+exclude = [
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    "alembic/versions",
+    ".ruff_cache",
+    ".mypy_cache",
+    "build",
+    "dist",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "A",   # flake8-builtins
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501", # line too long 
+]
+
+[tool.ruff.lint.isort]
+known-first-party = ["app"]
+combine-as-imports = true
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"__init__.py" = ["F401"]
+"app/main.py" = ["E402"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "lf"
