@@ -1,3 +1,13 @@
+"""
+SQLAlchemy base classes and common mixins.
+
+Provides:
+- Base declarative class with consistent naming convention
+- UUID primary key mixin
+- Timestamp mixins (created_at / updated_at)
+- Soft-delete mixin
+"""
+
 from datetime import datetime
 from uuid import UUID, uuid4
 
@@ -5,6 +15,7 @@ from sqlalchemy import DateTime, MetaData, func
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+# Consistent constraint naming for Alembic and PostgreSQL
 NAMING_CONVENTION: dict[str, str] = {
     "ix": "ix_%(table_name)s_%(column_0_name)s",
     "uq": "uq_%(table_name)s_%(column_0_name)s",
@@ -15,11 +26,17 @@ NAMING_CONVENTION: dict[str, str] = {
 
 
 class Base(DeclarativeBase):
+    """Base class for all SQLAlchemy models."""
+
     metadata = MetaData(naming_convention=NAMING_CONVENTION)
 
 
-class UUIDMIXIN:
-    """UUID primery key with server default."""
+class UUIDMixin:
+    """
+    UUID primary key mixin.
+
+    Uses PostgreSQL gen_random_uuid() as server default.
+    """
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -30,15 +47,21 @@ class UUIDMIXIN:
 
 
 class CreatedAtMixin:
-    """created_at with timezone-aware."""
+    """Adds a timezone-aware created_at column."""
 
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
+        DateTime(timezone=True),
+        server_default=func.now(),
+        nullable=False,
     )
 
 
 class UpdatedAtMixin:
-    """updated_at: last updated at orm level only."""
+    """
+    Adds a timezone-aware updated_at column.
+
+    Note: onupdate only triggers on ORM-level changes.
+    """
 
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -48,16 +71,29 @@ class UpdatedAtMixin:
     )
 
 
-class TimeStampMixin(CreatedAtMixin, UpdatedAtMixin):
-    """Mix created_at and updated_at."""
+class TimestampMixin(CreatedAtMixin, UpdatedAtMixin):
+    """Combines created_at and updated_at."""
 
 
 class SoftDeleteMixin:
-    """Soft delete with is_active and deactivated_at."""
+    """
+    Soft-delete support.
 
-    is_actve: Mapped[bool] = mapped_column(
-        default=True, server_default="true", nullable=False, index=True
+    Records are never hard-deleted. Instead:
+    - is_active is set to False
+    - deactivated_at is filled with the deactivation timestamp
+
+    Note: no single-column index on is_active (low cardinality).
+    Add composite indexes per-table when needed.
+    """
+
+    is_active: Mapped[bool] = mapped_column(
+        default=True,
+        server_default="true",
+        nullable=False,
     )
-    deactivated_at: Mapped[bool] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=None
+    deactivated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        default=None,
     )
