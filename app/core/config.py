@@ -1,22 +1,41 @@
 from functools import lru_cache
 
+from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env", env_file_encoding="utf-8", case_sensitive=False, extra="ignore"
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
     )
 
     # App
     app_name: str = "Notification Service"
-    debug: bool = True
+    debug: bool = False
 
     # Database
-    database_url: str = ""
+    postgres_user: str = Field(..., description="PostgreSQL username")
+    postgres_password: str = Field(..., description="PostgreSQL password")
+    postgres_db: str = Field(..., description="PostgreSQL database name")
+    postgres_host: str = "localhost"
+    postgres_port: int = 5432
+
+    # Connection pool tuning
     db_pool_size: int = 10
     db_max_overflow: int = 20
-    db_pool_recycle: int = 3600  # 1hour
+    db_pool_recycle: int = 3600  # 1 hour
+
+    @computed_field
+    @property
+    def database_url(self) -> str:
+        """Async SQLAlchemy URL built from the individual DB settings."""
+        return (
+            f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_password}"
+            f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        )
 
 
 @lru_cache

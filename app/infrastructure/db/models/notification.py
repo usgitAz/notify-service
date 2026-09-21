@@ -66,6 +66,7 @@ class Notification(UUIDMixin, TimestampMixin, Base):
             name="notification_channel",
             native_enum=False,
             length=20,
+            values_callable=lambda x: [e.value for e in x],
         ),
         nullable=False,
     )
@@ -79,11 +80,11 @@ class Notification(UUIDMixin, TimestampMixin, Base):
             name="notification_status",
             native_enum=False,
             length=20,
+            values_callable=lambda x: [e.value for e in x],
         ),
         nullable=False,
         default=NotificationStatus.PENDING,
         server_default=NotificationStatus.PENDING.value,
-        index=True,
     )
 
     attempts: Mapped[int] = mapped_column(

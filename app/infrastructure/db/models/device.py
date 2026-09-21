@@ -60,6 +60,7 @@ class Device(UUIDMixin, TimestampMixin, SoftDeleteMixin, Base):
             name="device_platform",
             native_enum=False,
             length=20,
+            values_callable=lambda x: [e.value for e in x],
         ),
         nullable=False,
     )
@@ -70,6 +71,7 @@ class Device(UUIDMixin, TimestampMixin, SoftDeleteMixin, Base):
             name="push_provider",
             native_enum=False,
             length=20,
+            values_callable=lambda x: [e.value for e in x],
         ),
         nullable=False,
         default=PushProvider.FCM,
