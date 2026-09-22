@@ -7,7 +7,7 @@ name = "notify-service"
 version = "0.1.0"
 description = "Notification as a Service (NaaS) - MVP"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 license = { text = "MIT" }
 authors = [{ name = "Alireza sohrabi", email = "gmdevaz@gmail.com" }]
 dependencies = [
@@ -25,6 +25,7 @@ dependencies = [
 [dependency-groups]
 dev = [
     "httpx>=0.28.1",
+    "mypy>=2.3.1",
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
@@ -40,7 +41,7 @@ include = ["app*"]
 
 # Ruff Configuration
 [tool.ruff]
-target-version = "py312"
+target-version = "py313"
 line-length = 88
 fix = true
 show-fixes = true
@@ -87,3 +88,21 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "lf"
+
+
+
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["pydantic.mypy"]
+warn_return_any = true
+warn_unused_configs = true
+check_untyped_defs = true
+ignore_missing_imports = true
+show_error_codes = true
+pretty = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+
+exclude = ["alembic/versions/", "tests/"]
+disable_error_code = ["prop-decorator"]

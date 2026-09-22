@@ -34,3 +34,15 @@ repos:
         types_or: [python, pyi]
       - id: ruff-format
         types_or: [python, pyi]
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v2.3.1
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic
+          - fastapi
+          - sqlalchemy
+          - types-requests
+        args: [--config-file=pyproject.toml]
+        files: ^app/

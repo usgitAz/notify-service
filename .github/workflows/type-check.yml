@@ -1,0 +1,30 @@
+#run mypy in ci to avoid type mistake
+name: Type Check
+
+on:
+    push:
+        branches: [main]
+    pull_request:
+        branches: [main]
+
+jobs:
+    mypy:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v6
+
+            - name: Set up Python
+              uses: actions/setup-python@v6
+              with:
+                  python-version: "3.13"
+                  cache: "pip"
+
+            - name: Install dependencies
+              run: |
+                  pip install -r requirements-dev.txt
+
+            - name: Install project
+              run: pip install .
+
+            - name: Run mypy
+              run: mypy app/
