@@ -72,6 +72,7 @@ select = [
 ]
 ignore = [
     "E501", # line too long
+    "B008", # FastAPI Depends in defaults
 ]
 
 [tool.ruff.lint.isort]
@@ -88,8 +89,6 @@ quote-style = "double"
 indent-style = "space"
 skip-magic-trailing-comma = false
 line-ending = "lf"
-
-
 
 
 [tool.mypy]

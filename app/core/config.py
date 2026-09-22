@@ -14,6 +14,10 @@ class Settings(BaseSettings):
 
     # App
     app_name: str = "Notification Service"
+    app_description: str = (
+        "super fast, fully non-blocking notification as a service - Nass"
+    )
+    app_version: str = "0.1.0"
     debug: bool = False
 
     # Database

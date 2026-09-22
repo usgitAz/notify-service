@@ -32,8 +32,10 @@ repos:
       - id: ruff
         args: [--exit-non-zero-on-fix]
         types_or: [python, pyi]
+        pass_filenames: false
       - id: ruff-format
         types_or: [python, pyi]
+        pass_filenames: false
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v2.3.1
