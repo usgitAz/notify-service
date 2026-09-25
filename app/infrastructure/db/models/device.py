@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Index, Text
+from sqlalchemy import DateTime, Enum as SQLEnum, ForeignKey, Index, String, Text
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -80,6 +80,12 @@ class Device(UUIDMixin, TimestampMixin, SoftDeleteMixin, Base):
 
     # FCM / APNs token (can be long)
     token: Mapped[str] = mapped_column(Text, nullable=False, unique=True)
+
+    # user device name (like Iphone12)
+    device_name: Mapped[str | None] = mapped_column(
+        String(100),
+        nullable=True,
+    )
 
     # Last time this device was used (for analytics / cleanup)
     last_used_at: Mapped[datetime | None] = mapped_column(
