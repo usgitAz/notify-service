@@ -58,6 +58,13 @@ class Settings(BaseSettings):
     uvicorn_port: int = 8000
     uvicorn_workers: int = 4
 
+    # security
+    api_key_pepper: str = Field(
+        ...,
+        min_length=48,
+        description="Server-side pepper for API key hashing (≥48 chars).",
+    )
+
     # create database url
     @computed_field
     @property
