@@ -31,6 +31,12 @@ class Tenant(UUIDMixin, TimestampMixin, SoftDeleteMixin, Base):
         nullable=False,
         unique=True,
     )
+    api_key_prefix: Mapped[str] = mapped_column(
+        String(20),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
 
     # Relationships
     users: Mapped[list["User"]] = relationship(
