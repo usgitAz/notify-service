@@ -28,7 +28,7 @@ def success_response[T](
     meta: ResponseMeta,
 ) -> SuccessResponse[T]:
     """
-    Wrap `data` in a SuccessResponse envelope.
+    Wrap data in a SuccessResponse envelope.
 
     Usage:
         return success_response(UserRead.model_validate(user), meta)

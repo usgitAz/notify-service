@@ -5,12 +5,17 @@ Represents an end-user belonging to a Tenant.
 external_id is the identifier used by the Tenant's own system.
 
 Records are never hard-deleted; only soft-deleted via is_active.
+
+Constraint:
+- (tenant_id, external_id) is UNIQUE across ALL rows, active or not.
+- This means a given external_id can be reused only by reactivating
+  the existing record, never by inserting a duplicate.
 """
 
 from typing import TYPE_CHECKING
 from uuid import UUID
 
-from sqlalchemy import ForeignKey, Index, String, text
+from sqlalchemy import ForeignKey, Index, String, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -51,12 +56,10 @@ class User(UUIDMixin, TimestampMixin, SoftDeleteMixin, Base):
     )
 
     __table_args__ = (
-        Index(
-            "uq_users_tenant_external_active",
+        UniqueConstraint(
             "tenant_id",
             "external_id",
-            unique=True,
-            postgresql_where=text("is_active = true"),
+            name="uq_users_tenant_external",
         ),
         Index("ix_users_tenant_active", "tenant_id", "is_active"),
     )

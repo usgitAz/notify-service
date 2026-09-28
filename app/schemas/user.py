@@ -44,3 +44,17 @@ class UserRead(BaseResponse):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+
+
+class UserUpdate(BaseRequest):
+    """All fields optional. Omitted fields are left unchanged."""
+
+    email: EmailStr | None = Field(
+        default=None,
+        max_length=320,
+        description="New email address.",
+    )
+    is_active: bool | None = Field(
+        default=None,
+        description="Set to false to deactivate the user (soft delete).",
+    )

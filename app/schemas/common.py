@@ -92,3 +92,56 @@ class ErrorResponse(BaseModel):
     success: bool = Field(default=False, frozen=True)
     error: ErrorBody
     meta: ResponseMeta
+
+
+class ValidationErrorDetail(BaseModel):
+    """Single field-level validation error."""
+
+    model_config = ConfigDict(frozen=True)
+
+    field: str | None = Field(
+        default=None,
+        description="Dot-path to the offending field, e.g., 'body.title'.",
+        examples=["str"],
+    )
+    code: str | None = Field(
+        default=None,
+        description="Machine-readable sub-code.",
+        examples=["str"],
+    )
+    message: str = Field(
+        description="Human-readable description.",
+        examples=["str"],
+    )
+
+
+class ValidationErrorBody(BaseModel):
+    """The `error` object of a ValidationErrorResponse."""
+
+    model_config = ConfigDict(frozen=True)
+
+    code: str = Field(
+        default="VALIDATION_ERROR",
+        description="Always 'VALIDATION_ERROR' for 422 responses.",
+        examples=["VALIDATION_ERROR"],
+    )
+    message: str = Field(
+        default="Request data failed validation.",
+        examples=["Request data failed validation."],
+    )
+    details: list[ValidationErrorDetail] = Field(
+        description="List of field-level errors.",
+    )
+
+
+class ValidationErrorResponse(BaseModel):
+    """Envelope for 422 validation errors.
+
+    Used in OpenAPI docs to give clear examples.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    success: bool = Field(default=False, frozen=True)
+    error: ValidationErrorBody
+    meta: ResponseMeta

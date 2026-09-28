@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 
 from app.api.exception_handlers import register_exception_handlers
+from app.api.v1.endpoints import health
+from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import logging_lifespan
 from app.middleware.request_id import RequestIDMiddleware
+from app.schemas.common import ValidationErrorResponse
 
 app = FastAPI(
     title=settings.app_name,
@@ -20,6 +23,11 @@ register_exception_handlers(app)
 
 
 # import routers
-from app.api.v1.endpoints import health
-
 app.include_router(health.router)
+app.include_router(
+    api_router,
+    prefix="/api/v1",
+    responses={
+        422: {"model": ValidationErrorResponse, "description": "Validation error"},
+    },
+)
