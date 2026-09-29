@@ -39,7 +39,7 @@ class NotificationCreate(BaseRequest):
         min_length=1,
         max_length=255,
         description="Recipient identifier in the Tenant's system.",
-        examples=["ali@example.com"],
+        examples=["user@example.com"],
     )
 
     channel: NotificationChannel = Field(

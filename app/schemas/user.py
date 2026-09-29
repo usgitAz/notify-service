@@ -24,13 +24,13 @@ class UserCreate(BaseRequest):
         min_length=1,
         max_length=255,
         description="User identifier in the Tenant's system.",
-        examples=["user_123", "ali@example.com"],
+        examples=["user_123", "user@example.com"],
     )
     email: EmailStr | None = Field(
         default=None,
         max_length=320,
         description="Optional email address. RFC 5321 max length.",
-        examples=["ali@example.com"],
+        examples=["user@example.com"],
     )
 
 
