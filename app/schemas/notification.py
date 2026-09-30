@@ -12,7 +12,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, model_validator
 
 from app.infrastructure.db.models import (
     DevicePlatform,
@@ -34,6 +34,17 @@ class NotificationCreate(BaseRequest):
      platform  and  device_id  are mutually exclusive.
     """
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "user_id": "user@example.com",
+                "channel": "push",
+                "title": "Welcome!",
+                "body": "Thanks for signing up.",
+            }
+        },
+    )
+
     user_id: str = Field(
         ...,
         min_length=1,
@@ -51,11 +62,13 @@ class NotificationCreate(BaseRequest):
         ...,
         min_length=1,
         max_length=255,
+        description="Short title of the notification.",
         examples=["Welcome!"],
     )
     body: str = Field(
         ...,
         min_length=1,
+        description="Body of the notification.",
         examples=["Thanks for signing up."],
     )
 
@@ -63,24 +76,28 @@ class NotificationCreate(BaseRequest):
     platform: DevicePlatform | None = Field(
         default=None,
         description=(
-            "Target all active devices of this platform (ios/android/web). "
-            "Only for channel=push."
+            "If set, delivers to ALL active devices of this platform. "
+            "Do NOT combine with `device_id`. "
+            "Leave unset to deliver to all active devices."
         ),
         examples=["ios"],
     )
     device_id: UUID | None = Field(
         default=None,
         description=(
-            "Target a specific device by ID. "
-            "Discover IDs via GET /users/{user_id}/devices."
+            "If set, delivers ONLY to this specific device. "
+            "Do NOT combine with `platform`. "
+            "Discover IDs via GET /api/v1/users/{user_id}/devices."
         ),
     )
 
-    # Cross-field validation
     @model_validator(mode="after")
     def _validate_targeting(self) -> NotificationCreate:
         if self.device_id is not None and self.platform is not None:
-            raise ValueError("device_id and platform cannot be combined.")
+            raise ValueError(
+                "`device_id` and `platform` cannot be combined. "
+                "Choose one targeting mode."
+            )
         return self
 
 
