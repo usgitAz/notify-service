@@ -12,11 +12,12 @@ from app.schemas.common import (
 )
 from app.schemas.device import DeviceCreate, DeviceRead, DeviceUpdate
 from app.schemas.notification import (
-    NotificationCreate,
+    NotificationEmailCreate,
     NotificationListFilters,
     NotificationRead,
 )
-from app.schemas.user import UserCreate, UserRead
+from app.schemas.tenant import TenantCreate, TenantRead, TenantWithApiKey
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 
 __all__ = [
     # Base
@@ -29,15 +30,20 @@ __all__ = [
     "ErrorBody",
     "ErrorDetail",
     "ResponseMeta",
+    # Tenant
+    "TenantCreate",
+    "TenantRead",
+    "TenantWithApiKey",
     # User
     "UserCreate",
     "UserRead",
+    "UserUpdate",
     # Device
     "DeviceCreate",
     "DeviceUpdate",
     "DeviceRead",
     # Notification
-    "NotificationCreate",
     "NotificationRead",
     "NotificationListFilters",
+    "NotificationEmailCreate",
 ]

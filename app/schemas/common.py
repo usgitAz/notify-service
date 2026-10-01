@@ -1,6 +1,4 @@
 """
-Common response schemas used across the entire API.
-
 Design principles:
 - Two envelopes: SuccessResponse[T] and ErrorResponse.
 - Every response carries `meta` with a request_id for tracing.
