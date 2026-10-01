@@ -4,16 +4,23 @@ Notification model.
 Represents a single notification send request and its delivery status.
 This is a historical record — soft-delete is intentionally not used.
 
+Cross-channel design:
+- One table for ALL channels (email, sms, push, ...).
+- Shared fields live as columns (status, attempts, user, ...).
+- Channel-specific payloads live in `payload` (JSONB):
+    - email → {"cc": [...], "bcc": [...], "attachments": [...]}
+    - sms   → {"phone_number": "+98912..."}
+    - push  → {"image_url": "...", "data": {...}}
 Foreign keys use RESTRICT so that related Tenant/User cannot be
 hard-deleted while notifications exist (we only soft-delete them).
 """
 
 import enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 from sqlalchemy import Enum as SQLEnum, ForeignKey, Index, Integer, String, Text
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.infrastructure.db.base import Base, TimestampMixin, UUIDMixin
@@ -44,6 +51,8 @@ class Notification(UUIDMixin, TimestampMixin, Base):
 
     Note:
     - Does NOT inherit SoftDeleteMixin (historical record).
+    - `title` is nullable (SMS does not have a subject).
+    - `payload` holds channel-specific fields (JSONB).
     - tenant_id and user_id are required and protected with RESTRICT.
     """
 
@@ -71,9 +80,27 @@ class Notification(UUIDMixin, TimestampMixin, Base):
         nullable=False,
     )
 
-    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    # --- Common fields ---
+    # title is optional: email/push have it, SMS does not.
+    title: Mapped[str | None] = mapped_column(
+        String(255),
+        nullable=True,
+    )
     body: Mapped[str] = mapped_column(Text, nullable=False)
 
+    # Channel-specific fields (JSONB)
+    # Examples:
+    #   email → {"cc": [...], "bcc": [...], "attachments": [...]}
+    #   push  → {"image_url": "...", "data": {...}}
+    #   sms   → {"phone_number": "+98912..."}
+    payload: Mapped[dict[str, Any]] = mapped_column(
+        JSONB,
+        nullable=False,
+        default=dict,
+        server_default="{}",
+    )
+
+    # Delivery state
     status: Mapped[NotificationStatus] = mapped_column(
         SQLEnum(
             NotificationStatus,
