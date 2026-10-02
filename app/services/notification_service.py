@@ -1,79 +1,90 @@
+"""
+Notification service — shared logic across all channels.
+
+Responsibilities:
+- Resolve user / device.
+- Persist a Notification (channel-agnostic).
+- Read / list notifications.
+- Update delivery state (called by senders).
+
+Channel-specific logic lives in dedicated services:
+    notification_email_service.py → create_email()
+"""
+
 from __future__ import annotations
 
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import NotFoundError, ValidationError
+from app.core.exceptions import NotFoundError
 from app.infrastructure.db.models import (
     Notification,
+    NotificationChannel,
     NotificationStatus,
     Tenant,
+    User,
 )
-from app.repositories.device_repo import DeviceRepository
 from app.repositories.notification_repo import NotificationRepository
 from app.repositories.user_repo import UserRepository
-from app.schemas.notification import NotificationCreate
 
 
 class NotificationService:
-    """Service for Notification operations."""
+    """Shared notification logic."""
 
     def __init__(self) -> None:
         self.repo = NotificationRepository()
         self.user_repo = UserRepository()
-        self.device_repo = DeviceRepository()
 
-    async def create(
+    # Shared helpers (used by channel-specific services)
+    async def resolve_user(
         self,
         session: AsyncSession,
         tenant: Tenant,
-        payload: NotificationCreate,
-    ) -> Notification:
+        external_id: str,
+    ) -> User:
         """
-        Create a notification record.
+        Resolve an active user by external_id.
 
-        Steps:
-          1. Resolve the user (must be active, belong to tenant).
-          2. If device_id is provided, verify it belongs to the user.
-          3. Persist a Notification with status=pending.
-
-        NOTE: actual delivery is out of scope here — a later phase
-        will pick up pending notifications and dispatch them.
+        Raises NotFoundError if not found.
         """
-        # 1. Resolve user
-        user = await self.user_repo.get_by_external_id(
-            session, tenant.id, payload.user_id
-        )
+        user = await self.user_repo.get_by_external_id(session, tenant.id, external_id)
         if user is None:
             raise NotFoundError(
-                f"User '{payload.user_id}' not found.",
+                f"User '{external_id}' not found.",
                 code="USER_NOT_FOUND",
             )
+        return user
 
-        # 2. If device_id given, verify ownership
-        if payload.device_id is not None:
-            device = await self.device_repo.get_active_by_id_and_tenant(
-                session, payload.device_id, tenant.id
-            )
-            if device is None or device.user_id != user.id:
-                raise ValidationError(
-                    "The device_id does not belong to the given user.",
-                    code="DEVICE_NOT_OWNED_BY_USER",
-                )
+    async def persist(
+        self,
+        session: AsyncSession,
+        *,
+        tenant: Tenant,
+        user: User,
+        channel: NotificationChannel,
+        title: str | None,
+        body: str,
+        payload: dict,
+    ) -> Notification:
+        """
+        Persist a new Notification row in PENDING state.
 
-        # 3. Persist
+        Used by channel-specific services.
+        """
         notification = Notification(
             tenant_id=tenant.id,
             user_id=user.id,
-            channel=payload.channel,
-            title=payload.title,
-            body=payload.body,
+            channel=channel,
+            title=title,
+            body=body,
+            payload=payload,
             status=NotificationStatus.PENDING,
         )
         await self.repo.add(session, notification)
         return notification
 
+    # Reads
     async def get_by_id(
         self,
         session: AsyncSession,
@@ -95,7 +106,7 @@ class NotificationService:
         tenant: Tenant,
         *,
         status: NotificationStatus | None = None,
-        channel=None,
+        channel: NotificationChannel | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> tuple[list[Notification], int]:
