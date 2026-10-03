@@ -22,13 +22,13 @@ router = APIRouter(prefix="/users", tags=["users"])
     ),
 )
 async def create_user(
-    payload: UserCreate,
+    request: UserCreate,
     meta: ResponseMetaDep,
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
 ) -> SuccessResponse[UserRead]:
     service = UserService()
-    user = await service.create(session, tenant, payload)
+    user = await service.create(session, tenant, request)
     await session.commit()
     return success_response(UserRead.model_validate(user), meta)
 
@@ -60,12 +60,12 @@ async def get_user(
 )
 async def update_user(
     external_id: str,
-    payload: UserUpdate,
+    request: UserUpdate,
     meta: ResponseMetaDep,
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
 ) -> SuccessResponse[UserRead]:
     service = UserService()
-    user = await service.update(session, tenant, external_id, payload)
+    user = await service.update(session, tenant, external_id, request)
     await session.commit()
     return success_response(UserRead.model_validate(user), meta)

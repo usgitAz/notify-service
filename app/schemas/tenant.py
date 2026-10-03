@@ -23,7 +23,7 @@ class TenantCreate(BaseRequest):
 
 
 class TenantRead(BaseResponse):
-    """Response payload for a single Tenant.
+    """Response request for a single Tenant.
 
     Note: `api_key_hash` is intentionally omitted.
     """

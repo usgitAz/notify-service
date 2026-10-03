@@ -35,7 +35,7 @@ class UserCreate(BaseRequest):
 
 
 class UserRead(BaseResponse):
-    """Response payload for a single User."""
+    """Response request for a single User."""
 
     id: UUID
     tenant_id: UUID

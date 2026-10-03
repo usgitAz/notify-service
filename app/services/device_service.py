@@ -19,7 +19,7 @@ class DeviceService:
         self,
         session: AsyncSession,
         user: User,
-        payload: DeviceCreate,
+        request: DeviceCreate,
     ) -> Device:
         """
         Register a new device for a user.
@@ -31,7 +31,7 @@ class DeviceService:
         - If the same token is registered to THIS user and is inactive,
           reactivate it (idempotent).
         """
-        existing = await self.repo.get_by_token(session, payload.token)
+        existing = await self.repo.get_by_token(session, request.token)
         if existing is not None:
             if existing.user_id != user.id:
                 raise ConflictError(
@@ -46,19 +46,19 @@ class DeviceService:
             # Reactivate: same token, same user, currently inactive
             existing.is_active = True
             existing.deactivated_at = None
-            existing.platform = payload.platform
-            existing.provider = payload.provider
-            existing.device_name = payload.device_name
+            existing.platform = request.platform
+            existing.provider = request.provider
+            existing.device_name = request.device_name
             await session.flush()
             await session.refresh(existing)
             return existing
 
         device = Device(
             user_id=user.id,
-            platform=payload.platform,
-            provider=payload.provider,
-            token=payload.token,
-            device_name=payload.device_name,
+            platform=request.platform,
+            provider=request.provider,
+            token=request.token,
+            device_name=request.device_name,
         )
         await self.repo.add(session, device)
         return device
@@ -93,7 +93,7 @@ class DeviceService:
         session: AsyncSession,
         tenant: Tenant,
         device_id: UUID,
-        payload: DeviceUpdate,
+        request: DeviceUpdate,
     ) -> Device:
         """
         Update a device (device_name, is_active).
@@ -103,10 +103,10 @@ class DeviceService:
         """
         device = await self.get_by_id(session, tenant, device_id)
 
-        if payload.device_name is not None:
-            device.device_name = payload.device_name
+        if request.device_name is not None:
+            device.device_name = request.device_name
 
-        if payload.is_active is False:
+        if request.is_active is False:
             device.is_active = False
             device.deactivated_at = datetime.now(UTC)
 

@@ -1,5 +1,3 @@
-"""Device schemas."""
-
 from __future__ import annotations
 
 from datetime import datetime
@@ -63,7 +61,7 @@ class DeviceUpdate(BaseRequest):
 
 
 class DeviceRead(BaseResponse):
-    """Response payload for a single Device."""
+    """Response request for a single Device."""
 
     id: UUID
     user_id: UUID

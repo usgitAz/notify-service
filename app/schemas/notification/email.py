@@ -30,7 +30,11 @@ class NotificationEmailCreate(BaseRequest):
                 "user_id": "user@example.com",
                 "subject": "Welcome!",
                 "body": "Thanks for signing up.",
+                "from_email": "noreply@shopx.com",
+                "reply_to": "support@shopx.com",
                 "cc": ["team@example.com"],
+                "bcc": ["audit@example.com"],
+                "attachments": ["https://cdn.x.com/welcome.pdf"],
             }
         }
     }

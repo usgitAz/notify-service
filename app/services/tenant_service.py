@@ -1,5 +1,3 @@
-"""Tenant service."""
-
 from __future__ import annotations
 
 from typing import Literal
@@ -26,7 +24,7 @@ class TenantService:
     async def register(
         self,
         session: AsyncSession,
-        payload: TenantCreate,
+        request: TenantCreate,
         *,
         environment: Literal["live", "test"] = "live",
     ) -> TenantWithApiKey:
@@ -40,10 +38,10 @@ class TenantService:
           4. Persist the tenant.
           5. Return the raw key ONCE.
         """
-        existing = await self.repo.get_by_name(session, payload.name)
+        existing = await self.repo.get_by_name(session, request.name)
         if existing is not None:
             raise ConflictError(
-                f"Tenant with name '{payload.name}' already exists.",
+                f"Tenant with name '{request.name}' already exists.",
                 code="TENANT_NAME_TAKEN",
             )
 
@@ -52,7 +50,7 @@ class TenantService:
         key_prefix = extract_prefix(raw_key)
 
         tenant = Tenant(
-            name=payload.name,
+            name=request.name,
             api_key_hash=key_hash,
             api_key_prefix=key_prefix,
         )

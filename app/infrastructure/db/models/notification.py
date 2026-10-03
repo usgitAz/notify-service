@@ -80,7 +80,7 @@ class Notification(UUIDMixin, TimestampMixin, Base):
         nullable=False,
     )
 
-    # --- Common fields ---
+    # Common fields
     # title is optional: email/push have it, SMS does not.
     title: Mapped[str | None] = mapped_column(
         String(255),

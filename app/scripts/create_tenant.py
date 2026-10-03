@@ -23,14 +23,14 @@ logger = get_logger(__name__)
 
 async def _run(name: str, environment: str) -> int:
     """Create the tenant, print result. Return exit code."""
-    payload = TenantCreate(name=name)
+    request = TenantCreate(name=name)
 
     async with AsyncSessionLocal() as session:
         try:
             service = TenantService()
             result = await service.register(
                 session,
-                payload,
+                request,
                 environment=cast(Literal["live", "test"], environment),
             )
             await session.commit()

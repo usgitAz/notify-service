@@ -65,6 +65,16 @@ class Settings(BaseSettings):
         description="Server-side pepper for API key hashing (≥48 chars).",
     )
 
+    # Email (SMTP)
+    smtp_enabled: bool = False
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: str = ""
+    smtp_password: str = ""
+    smtp_from: str = ""
+    smtp_from_name: str = "Notification Service"
+    smtp_use_tls: bool = True
+
     # create database url
     @computed_field
     @property

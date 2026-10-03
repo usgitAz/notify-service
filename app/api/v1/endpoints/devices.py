@@ -29,13 +29,13 @@ router = APIRouter(tags=["devices"])
 )
 async def register_device(
     external_id: str,
-    payload: DeviceCreate,
+    request: DeviceCreate,
     meta: ResponseMetaDep,
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
 ) -> SuccessResponse[DeviceRead]:
     user = await UserService().get_by_external_id(session, tenant, external_id)
-    device = await DeviceService().register(session, user, payload)
+    device = await DeviceService().register(session, user, request)
     await session.commit()
     return success_response(DeviceRead.model_validate(device), meta)
 
@@ -89,11 +89,11 @@ async def get_device(
 )
 async def update_device(
     device_id: UUID,
-    payload: DeviceUpdate,
+    request: DeviceUpdate,
     meta: ResponseMetaDep,
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
 ) -> SuccessResponse[DeviceRead]:
-    device = await DeviceService().update(session, tenant, device_id, payload)
+    device = await DeviceService().update(session, tenant, device_id, request)
     await session.commit()
     return success_response(DeviceRead.model_validate(device), meta)
