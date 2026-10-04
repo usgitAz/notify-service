@@ -11,10 +11,12 @@ from __future__ import annotations
 from collections.abc import AsyncGenerator
 from typing import Annotated
 
+import redis.asyncio as aioredis
 from fastapi import Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.exceptions import AuthenticationError
+from app.core.redis import redis_client
 from app.core.security import extract_prefix, verify_api_key
 from app.infrastructure.db.models import Tenant
 from app.infrastructure.db.session import AsyncSessionLocal
@@ -81,3 +83,35 @@ async def get_current_tenant(
         raise AuthenticationError(_INVALID_KEY_MSG)
 
     return tenant
+
+
+# Idempotency
+async def get_idempotency_key(
+    idempotency_key: Annotated[
+        str | None,
+        Header(
+            alias="Idempotency-Key",
+            description=(
+                "Client-generated unique key. "
+                "Recommended: UUID v4. "
+                "Max length: 255. "
+                "Retries with the same key return the original response."
+            ),
+            min_length=1,
+            max_length=255,
+        ),
+    ] = None,
+) -> str | None:
+    """Extract and validate the Idempotency-Key header."""
+    return idempotency_key
+
+
+IdempotencyKeyDep = Annotated[str | None, Depends(get_idempotency_key)]
+
+
+def get_redis() -> aioredis.Redis | None:
+    """Return the shared Redis client, or None if unavailable."""
+    return redis_client
+
+
+RedisDep = Annotated[aioredis.Redis | None, Depends(get_redis)]

@@ -75,6 +75,10 @@ class Settings(BaseSettings):
     smtp_from_name: str = "Notification Service"
     smtp_use_tls: bool = True
 
+    # Redis
+    redis_url: str = "redis://localhost:6379/0"
+    idempotency_ttl_seconds: int = 86400  # 24 hours
+
     # create database url
     @computed_field
     @property
