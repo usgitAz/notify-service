@@ -78,7 +78,7 @@ async def _dispatch(
     notification: Notification,
 ) -> None:
     """Attempt delivery with retries for transient errors."""
-    for attempt in range(1, MAX_ATTEMPTS + 1):
+    for attempt in range(1, MAX_ATTEMPTS + 1):  # pragma: no branch
         notification.attempts = attempt
 
         try:

@@ -61,7 +61,7 @@ async def app_exception_handler(request: Request, exc: Exception) -> JSONRespons
     Narrowed to AppBaseException at runtime. If somehow a different
     exception reaches here, we fall back to a safe 500.
     """
-    if not isinstance(exc, AppBaseException):
+    if not isinstance(exc, AppBaseException):  # pragma: no cover
         # Defensive: should never happen given registration in
         # register_exception_handlers(). Treat as unexpected.
         return await unhandled_exception_handler(request, exc)
@@ -95,7 +95,7 @@ async def validation_exception_handler(
     Note: `loc` may start with 'body', 'query', 'path', or 'header'.
     We preserve that prefix so clients know *where* the field lives.
     """
-    if not isinstance(exc, RequestValidationError):
+    if not isinstance(exc, RequestValidationError):  # pragma: no cover
         return await unhandled_exception_handler(request, exc)
 
     details: list[ErrorDetail] = []
@@ -133,7 +133,7 @@ async def http_exception_handler(request: Request, exc: Exception) -> JSONRespon
     Wraps Starlette's HTTPException (raised internally by FastAPI, e.g. 405)
     so it also conforms to ErrorResponse.
     """
-    if not isinstance(exc, StarletteHTTPException):
+    if not isinstance(exc, StarletteHTTPException):  # pragma: no cover
         return await unhandled_exception_handler(request, exc)
 
     return _build_error_response(

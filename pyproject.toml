@@ -25,11 +25,14 @@ dependencies = [
 
 [dependency-groups]
 dev = [
+    "fakeredis>=2.39.0",
     "httpx>=0.28.1",
     "mypy>=2.3.1",
     "pre-commit>=4.6.2",
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.16.0",
     "ruff>=0.16.8",
 ]
 
@@ -106,3 +109,45 @@ disallow_incomplete_defs = false
 
 exclude = ["alembic/versions/", "tests/"]
 disable_error_code = ["prop-decorator"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+addopts = ["--strict-markers", "--strict-config", "--tb=short", "-ra"]
+markers = [
+    "unit: Unit tests (no DB, no network).",
+    "integration: Integration tests (DB required).",
+    "slow: Slow tests.",
+]
+filterwarnings = ["ignore::starlette.exceptions.StarletteDeprecationWarning"]
+[tool.coverage.run]
+source = ["app"]
+branch = true
+concurrency = ["greenlet", "thread"]
+omit = [
+    "*/tests/*",
+    "*/alembic/*",
+    "*/__init__.py",
+    "app/main.py",                      # entrypoint
+    "app/scripts/*",                    # CLI scripts
+    "app/core/logging.py",              # fapilog setup
+    "app/core/config.py",               # pydantic settings
+    "app/infrastructure/db/session.py", # overridden in tests
+    "app/api/deps.py",                  # FastAPI Depends (overridden)
+    "app/core/redis.py",                # single-line client init
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@abstractmethod",
+]
+show_missing = true
+precision = 2

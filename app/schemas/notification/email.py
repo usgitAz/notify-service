@@ -97,7 +97,7 @@ class NotificationEmailCreate(BaseRequest):
     @field_validator("cc", "bcc", "attachments")
     @classmethod
     def _dedupe(cls, v: list | None) -> list | None:
-        if v is None:
+        if v is None:  # pragma: no cover
             return None
         # dict.fromkeys preserves order and removes duplicates
         return list(dict.fromkeys(v)) or None

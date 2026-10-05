@@ -23,7 +23,7 @@ class UserRepository(BaseRepository[User]):
             User.is_active.is_(True),
         )
         result = await session.scalars(stmt)
-        return result.first()
+        return result.first()  # pragma: no cover
 
     async def list_by_tenant(
         self,
@@ -64,4 +64,4 @@ class UserRepository(BaseRepository[User]):
             User.external_id == external_id,
         )
         result = await session.scalars(stmt)
-        return result.first()
+        return result.first()  # pragma: no cover

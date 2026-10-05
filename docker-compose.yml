@@ -18,5 +18,17 @@ services:
       retries: 5
       start_period: 10s
 
+  # for pytest
+  db_test:
+    image: postgres:17-alpine
+    container_name: notify-db-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: notif_test
+    ports:
+      - "5433:5432"
+
 volumes:
   postgres_data:
