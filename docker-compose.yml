@@ -1,14 +1,15 @@
+# Base compose file — shared infrastructure for ALL environments.
+# Do NOT use this file directly; always combine it with a dev/prod override:
+#
+#   Dev:   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+#   Prod:  docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+name: notify-service
+
 services:
   db:
     image: postgres:17-alpine
     container_name: notify-db
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -17,18 +18,27 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - backend
 
-  # for pytest
-  db_test:
-    image: postgres:17-alpine
-    container_name: notify-db-test
+  redis:
+    image: redis:7-alpine
+    container_name: notify-redis
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: notif_test
-    ports:
-      - "5433:5432"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - backend
 
 volumes:
   postgres_data:
+  redis_data:
+
+networks:
+  backend:
+    driver: bridge

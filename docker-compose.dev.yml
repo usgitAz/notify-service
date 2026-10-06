@@ -1,0 +1,94 @@
+# Development overrides.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: notify-api
+    command: >
+      uvicorn app.main:app
+        --host 0.0.0.0
+        --port 8000
+        --reload
+        --reload-dir /app/app
+    env_file:
+      - .env.dev
+    environment:
+      DEBUG: "true"
+    volumes:
+      # Mount source for hot-reload
+      - ./app:/app/app:ro
+      - ./tests:/app/tests:ro
+      - ./alembic:/app/alembic:ro
+      - ./run.py:/app/run.py:ro
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks:
+      - backend
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    env_file:
+      - .env.dev
+    command: alembic upgrade head
+    restart: "no"
+    profiles: ["migrate"] # use to run this service with docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile migrate up
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend
+
+  # Expose DB & Redis to the host for local tools (psql, redis-cli, TablePlus)
+  db:
+    ports:
+      - "5432:5432"
+    env_file:
+      - .env.dev
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  # MailHog — fake SMTP + web UI for testing emails locally
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: notify-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI — http://localhost:8025
+    networks:
+      - backend
+
+  # Test database (only when running tests)
+  db-test:
+    image: postgres:17-alpine
+    container_name: notify-db-test
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: notif_test
+    ports:
+      - "5433:5432"
+    networks:
+      - backend
+    profiles: ["test"] #docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile test up -d db-test
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U user -d notif_test"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
