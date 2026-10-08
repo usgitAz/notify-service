@@ -12,9 +12,10 @@ from collections.abc import AsyncGenerator
 from typing import Annotated
 
 import redis.asyncio as aioredis
-from fastapi import Depends, Header, Request
+from fastapi import Depends, Header, Request, Security
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.api.security import api_key_header
 from app.core.exceptions import AuthenticationError
 from app.core.redis import redis_client
 from app.core.security import extract_prefix, verify_api_key
@@ -45,12 +46,9 @@ def get_response_meta(request: Request) -> ResponseMeta:
 
 async def get_current_tenant(
     session: Annotated[AsyncSession, Depends(get_db)],
-    x_api_key: Annotated[
+    api_key: Annotated[
         str | None,
-        Header(
-            alias="X-API-Key",
-            description="Tenant API key. Format: sk_<env>_<random>.",
-        ),
+        Security(api_key_header),
     ] = None,
 ) -> Tenant:
     """
@@ -62,15 +60,15 @@ async def get_current_tenant(
     - Hash comparison is constant-time (hmac.compare_digest).
     """
     # 1. Header present?
-    if not x_api_key:
+    if not api_key:
         raise AuthenticationError(_INVALID_KEY_MSG)
 
     # 2. Basic format sanity (sk_<env>_<random>)
-    if not x_api_key.startswith("sk_") or x_api_key.count("_") < 2:
+    if not api_key.startswith("sk_") or api_key.count("_") < 2:
         raise AuthenticationError(_INVALID_KEY_MSG)
 
     # 3. Extract prefix and look up tenant
-    prefix = extract_prefix(x_api_key)
+    prefix = extract_prefix(api_key)
     repo = TenantRepository()
     tenant = await repo.get_by_api_key_prefix(session, prefix)
 
@@ -79,7 +77,7 @@ async def get_current_tenant(
         raise AuthenticationError(_INVALID_KEY_MSG)
 
     # 5. Verify the full key against the stored hash
-    if not verify_api_key(x_api_key, tenant.api_key_hash):
+    if not verify_api_key(api_key, tenant.api_key_hash):
         raise AuthenticationError(_INVALID_KEY_MSG)
 
     return tenant
