@@ -2,29 +2,39 @@
 name: Type Check
 
 on:
-    push:
-        branches: [main]
-    pull_request:
-        branches: [main]
+  push:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - ".gitignore"
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "LICENSE"
+      - ".gitignore"
 
 jobs:
-    mypy:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v6
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
 
-            - name: Set up Python
-              uses: actions/setup-python@v6
-              with:
-                  python-version: "3.13"
-                  cache: "pip"
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+          cache: "pip"
 
-            - name: Install dependencies
-              run: |
-                  pip install -r requirements-dev.txt
+      - name: Install dependencies
+        run: |
+          pip install -r requirements-dev.txt
 
-            - name: Install project
-              run: pip install .
+      - name: Install project
+        run: pip install .
 
-            - name: Run mypy
-              run: mypy app/
+      - name: Run mypy
+        run: mypy app/
