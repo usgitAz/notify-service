@@ -6,7 +6,6 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.logging import logging_lifespan
 from app.middleware.request_id import RequestIDMiddleware
-from app.schemas.common import ValidationErrorResponse
 
 app = FastAPI(
     title=settings.app_name,
@@ -27,7 +26,4 @@ app.include_router(health.router)
 app.include_router(
     api_router,
     prefix="/api/v1",
-    responses={
-        422: {"model": ValidationErrorResponse, "description": "Validation error"},
-    },
 )

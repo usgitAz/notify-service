@@ -5,9 +5,13 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import RedisDep, get_db
+from app.api.openapi import RESPONSES_PUBLIC, RESPONSES_UNAVAILABLE
 from app.schemas.health import HealthReadyChecks, HealthReadyResponse, HealthResponse
 
-router = APIRouter(tags=["health"])
+router = APIRouter(
+    tags=["health"],
+    responses=RESPONSES_PUBLIC,
+)
 
 
 @router.get(
@@ -29,12 +33,7 @@ async def health() -> HealthResponse:
         "Checks database and Redis connectivity."
     ),
     response_model=HealthReadyResponse,
-    responses={
-        503: {
-            "model": HealthReadyResponse,
-            "description": "One or more dependencies are unavailable.",
-        },
-    },
+    responses=RESPONSES_UNAVAILABLE,
 )
 async def ready(
     response: Response,

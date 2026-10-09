@@ -1,6 +1,4 @@
-"""
-These endpoints work across ALL channels (email, push, sms, ...).
-"""
+"""Endpoints that work across all channels (email, push, sms, ...)."""
 
 from __future__ import annotations
 
@@ -10,6 +8,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_tenant, get_db
+from app.api.openapi import RESPONSES_AUTHENTICATED, error_response
 from app.api.responses import ResponseMetaDep, success_response
 from app.infrastructure.db.models import (
     NotificationChannel,
@@ -17,12 +16,13 @@ from app.infrastructure.db.models import (
     Tenant,
 )
 from app.schemas.common import SuccessResponse
-from app.schemas.notification import (
-    NotificationRead,
-)
+from app.schemas.notification import NotificationRead
 from app.services.notification_service import NotificationService
 
-router = APIRouter(tags=["notifications"])
+router = APIRouter(
+    tags=["notifications"],
+    responses=RESPONSES_AUTHENTICATED,
+)
 
 
 # Helpers
@@ -77,6 +77,11 @@ async def list_notifications(
 @router.get(
     "/{notification_id}",
     response_model=SuccessResponse[NotificationRead],
+    responses=error_response(
+        404,
+        code="NOTIFICATION_NOT_FOUND",
+        message="Notification '3fa85f64-5717-4562-b3fc-2c963f66afa6' not found.",
+    ),
     summary="Get a notification by ID",
 )
 async def get_notification(

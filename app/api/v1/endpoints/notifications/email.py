@@ -17,6 +17,12 @@ from app.api.deps import (
     get_current_tenant,
     get_db,
 )
+from app.api.openapi import (
+    RESPONSES_AUTHENTICATED,
+    error_response,
+    responses,
+    validation_response,
+)
 from app.api.responses import ResponseMetaDep, success_response
 from app.api.v1.endpoints.notifications.common import to_read
 from app.core.idempotency import build_key, cache_response, get_cached_response
@@ -33,13 +39,29 @@ from app.services.sender import send_notification
 
 logger = get_logger(__name__)
 
-router = APIRouter(tags=["notifications"])
+router = APIRouter(
+    tags=["notifications"],
+    responses=RESPONSES_AUTHENTICATED,
+)
 
 
 @router.post(
     "/email",
     status_code=status.HTTP_202_ACCEPTED,
     response_model=SuccessResponse[NotificationRead],
+    responses=responses(
+        error_response(
+            404,
+            code="USER_NOT_FOUND",
+            message="User 'alice' not found.",
+        ),
+        validation_response(
+            description=(
+                "Request validation failed, or the target user has no email "
+                "address (`USER_HAS_NO_EMAIL`)."
+            ),
+        ),
+    ),
     summary="Send an email notification",
     description=(
         "Create an email notification for a user. "

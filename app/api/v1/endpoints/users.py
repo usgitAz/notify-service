@@ -2,19 +2,33 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_tenant, get_db
+from app.api.openapi import RESPONSES_AUTHENTICATED, error_response
 from app.api.responses import ResponseMetaDep, success_response
 from app.infrastructure.db.models import Tenant
 from app.schemas.common import SuccessResponse
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.services.user_service import UserService
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(
+    prefix="/users",
+    tags=["users"],
+    responses=RESPONSES_AUTHENTICATED,
+)
 
 
 @router.post(
     "",
     status_code=status.HTTP_201_CREATED,
     response_model=SuccessResponse[UserRead],
+    responses=error_response(
+        409,
+        code="USER_ALREADY_EXISTS",
+        message="User 'alice' already exists.",
+        description=(
+            "User already exists (active), or exists but is inactive "
+            "(`USER_EXISTS_INACTIVE`)."
+        ),
+    ),
     summary="Create a user",
     description=(
         "Create a new user belonging to the authenticated tenant. "
@@ -36,6 +50,11 @@ async def create_user(
 @router.get(
     "/{external_id}",
     response_model=SuccessResponse[UserRead],
+    responses=error_response(
+        404,
+        code="USER_NOT_FOUND",
+        message="User 'alice' not found.",
+    ),
     summary="Get a user by external_id",
 )
 async def get_user(
@@ -52,6 +71,11 @@ async def get_user(
 @router.patch(
     "/{external_id}",
     response_model=SuccessResponse[UserRead],
+    responses=error_response(
+        404,
+        code="USER_NOT_FOUND",
+        message="User 'alice' not found.",
+    ),
     summary="Update a user",
     description=(
         "Partial update. Currently supports `email` and `is_active`. "
