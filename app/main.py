@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.api.exception_handlers import register_exception_handlers
+from app.api.openapi import tags_metadata
 from app.api.v1.endpoints import health
 from app.api.v1.router import api_router
 from app.core.config import settings
@@ -13,6 +14,7 @@ app = FastAPI(
     version=settings.app_version,
     debug=settings.debug,
     lifespan=logging_lifespan,
+    openapi_tags=tags_metadata,
 )
 
 # middlewares

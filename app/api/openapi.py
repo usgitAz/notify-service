@@ -141,3 +141,20 @@ RESPONSES_PUBLIC: dict[int | str, dict[str, Any]] = {
 }
 
 RESPONSES_UNAVAILABLE: dict[int | str, dict[str, Any]] = ready_unavailable_response()
+
+# openapi tags
+tags_metadata = [
+    {"name": "health", "description": "Liveness and readiness probes for monitoring."},
+    {
+        "name": "users",
+        "description": "Manage end-users of a tenant, identified by external_id.",
+    },
+    {
+        "name": "devices",
+        "description": "Register and manage push devices. Tokens must be globally unique.",
+    },
+    {
+        "name": "notifications",
+        "description": "Create, list, and inspect notifications. Delivery is asynchronous.",
+    },
+]
