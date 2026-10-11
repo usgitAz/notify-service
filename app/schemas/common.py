@@ -1,6 +1,11 @@
 """
-Design principles:
-- Two envelopes: SuccessResponse[T] and ErrorResponse.
+Common response schemas used across the entire API.
+
+Design:
+- One success envelope: `SuccessResponse[T]`.
+- One error envelope: `ErrorResponse`. Validation errors (422) are
+  just an `ErrorResponse` with a populated `details[]` list — no
+  separate schema needed.
 - Every response carries `meta` with a request_id for tracing.
 - Error shape is stable and machine-readable (code) + human-readable (message).
 """
@@ -23,7 +28,15 @@ def _utc_now() -> datetime:
 class ResponseMeta(BaseModel):
     """Metadata attached to every API response."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "timestamp": "2026-10-11T12:00:00Z",
+                "request_id": "f0468f6b-cd9f-46bb-b87d-3cefdc1c0be6",
+            }
+        },
+    )
 
     timestamp: datetime = Field(default_factory=_utc_now)
     request_id: str | None = Field(
@@ -33,13 +46,18 @@ class ResponseMeta(BaseModel):
 
 
 class ErrorDetail(BaseModel):
-    """A single field-level error."""
+    """
+    A single field-level error.
+
+    Used mainly for validation errors, where multiple fields
+    may fail at once.
+    """
 
     model_config = ConfigDict(
         frozen=True,
         json_schema_extra={
             "example": {
-                "field": "body.title",
+                "field": "body.external_id",
                 "code": "string_too_short",
                 "message": "String should have at least 1 character",
             }
@@ -47,9 +65,13 @@ class ErrorDetail(BaseModel):
     )
 
     field: str | None = Field(
-        default=None, description="Dot-path to the offending field."
+        default=None,
+        description="Dot-path to the offending field, e.g. 'channel.token'.",
     )
-    code: str | None = Field(default=None, description="Machine-readable sub-code.")
+    code: str | None = Field(
+        default=None,
+        description="Machine-readable sub-code, e.g. 'string_too_short'.",
+    )
     message: str = Field(description="Human-readable description of the problem.")
 
 
@@ -77,18 +99,8 @@ class ErrorBody(BaseModel):
     )
     details: list[ErrorDetail] | None = Field(
         default=None,
-        description="Additional, structured context. Typically validation errors.",
+        description=("Additional, structured context. "),
     )
-
-
-class SuccessResponse[T](BaseModel):
-    """Envelope for successful responses."""
-
-    model_config = ConfigDict(frozen=True)
-
-    success: bool = Field(default=True, frozen=True)
-    data: T
-    meta: ResponseMeta
 
 
 class ErrorResponse(BaseModel):
@@ -117,71 +129,11 @@ class ErrorResponse(BaseModel):
     meta: ResponseMeta
 
 
-class ValidationErrorDetail(BaseModel):
-    """Single field-level validation error."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        json_schema_extra={
-            "example": {
-                "field": "body.external_id",
-                "code": "string_too_short",
-                "message": "String should have at least 1 character",
-            }
-        },
-    )
-
-    field: str | None = Field(default=None)
-    code: str | None = Field(default=None)
-    message: str = Field(description="Human-readable description.")
-
-
-class ValidationErrorBody(BaseModel):
-    """The `error` object of a ValidationErrorResponse."""
+class SuccessResponse[T](BaseModel):
+    """Envelope for successful responses."""
 
     model_config = ConfigDict(frozen=True)
 
-    code: str = Field(
-        default="VALIDATION_ERROR",
-        description="Always 'VALIDATION_ERROR' for 422 responses.",
-        examples=["VALIDATION_ERROR"],
-    )
-    message: str = Field(
-        default="Request data failed validation.",
-        examples=["Request data failed validation."],
-    )
-    details: list[ValidationErrorDetail] = Field(
-        description="List of field-level errors.",
-    )
-
-
-class ValidationErrorResponse(BaseModel):
-    """Envelope for 422 validation errors."""
-
-    model_config = ConfigDict(
-        frozen=True,
-        json_schema_extra={
-            "example": {
-                "success": False,
-                "error": {
-                    "code": "VALIDATION_ERROR",
-                    "message": "Request data failed validation.",
-                    "details": [
-                        {
-                            "field": "body.external_id",
-                            "code": "string_too_short",
-                            "message": "String should have at least 1 character",
-                        }
-                    ],
-                },
-                "meta": {
-                    "timestamp": "2026-10-11T12:00:00Z",
-                    "request_id": "f0468f6b-cd9f-46bb-b87d-3cefdc1c0be6",
-                },
-            }
-        },
-    )
-
-    success: bool = Field(default=False, frozen=True)
-    error: ValidationErrorBody
+    success: bool = Field(default=True, frozen=True)
+    data: T
     meta: ResponseMeta

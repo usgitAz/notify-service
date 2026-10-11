@@ -40,6 +40,8 @@ class TestUnhandledExceptionHandler:
         assert body["error"]["message"] == (
             "An unexpected error occurred. Please try again later."
         )
+        # details is None for non-validation errors
+        assert body["error"]["details"] is None
 
     async def test_does_not_leak_internal_details(self):
         request = _make_request()
