@@ -1,12 +1,12 @@
 """Health check response schemas."""
 
-from pydantic import Field
-
-from app.schemas.base import BaseResponse
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class HealthResponse(BaseResponse):
+class HealthResponse(BaseModel):
     """Liveness probe response."""
+
+    model_config = ConfigDict(json_schema_extra={"example": {"status": "healthy"}})
 
     status: str = Field(
         ...,
@@ -15,15 +15,18 @@ class HealthResponse(BaseResponse):
     )
 
 
-class HealthReadyChecks(BaseResponse):
+class HealthReadyChecks(BaseModel):
     """Individual dependency checks for readiness."""
+
+    model_config = ConfigDict(
+        frozen=True, json_schema_extra={"example": {"database": "ok", "redis": "ok"}}
+    )
 
     database: str = Field(
         ...,
         description="'ok' when the DB responds, else 'error: <TypeName>'.",
         examples=["ok", "error: OperationalError"],
     )
-
     redis: str = Field(
         ...,
         description="'ok' when Redis responds, else 'error: <TypeName>'.",
@@ -31,8 +34,17 @@ class HealthReadyChecks(BaseResponse):
     )
 
 
-class HealthReadyResponse(BaseResponse):
+class HealthReadyResponse(BaseModel):
     """Readiness probe response."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "status": "ready",
+                "checks": {"database": "ok", "redis": "ok"},
+            }
+        }
+    )
 
     status: str = Field(
         ...,

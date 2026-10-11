@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.infrastructure.db.models import DevicePlatform, PushProvider
 from app.schemas.base import BaseRequest, BaseResponse
@@ -17,6 +17,17 @@ class DeviceCreate(BaseRequest):
     - `token` must be unique globally.
     - `device_name` is optional but recommended (shown in client UIs).
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "platform": "ios",
+                "provider": "fcm",
+                "token": "fcm_token_abc123_def456_ghi789",
+                "device_name": "iPhone 15 Pro",
+            }
+        }
+    )
 
     platform: DevicePlatform = Field(
         ...,
@@ -49,6 +60,15 @@ class DeviceUpdate(BaseRequest):
     (a change would mean a different device).
     """
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {"device_name": "Ali's iPhone"},
+                {"is_active": False},
+            ]
+        }
+    )
+
     device_name: str | None = Field(
         default=None,
         max_length=100,
@@ -62,6 +82,23 @@ class DeviceUpdate(BaseRequest):
 
 class DeviceRead(BaseResponse):
     """Response request for a single Device."""
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                "user_id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "platform": "ios",
+                "provider": "fcm",
+                "token": "fcm_token_abc123_def456_ghi789",
+                "device_name": "iPhone 15 Pro",
+                "is_active": True,
+                "last_used_at": "2026-10-11T12:00:00Z",
+                "created_at": "2026-10-10T08:00:00Z",
+                "updated_at": "2026-10-11T12:00:00Z",
+            }
+        }
+    )
 
     id: UUID
     user_id: UUID

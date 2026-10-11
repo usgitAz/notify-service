@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.infrastructure.db.models import (
     NotificationChannel,
@@ -35,6 +35,29 @@ class NotificationRead(BaseResponse):
         push  → {"image_url": "...", "data": {...}}
         sms   → {"phone_number": "+98912..."}
     """
+
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+                "tenant_id": "c1a2b3d4-e5f6-7890-abcd-ef1234567890",
+                "user_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+                "user_external_id": "user@example.com",
+                "channel": "email",
+                "title": "Welcome!",
+                "body": "Thanks for signing up.",
+                "payload": {
+                    "to_email": "user@example.com",
+                    "cc": ["team@example.com"],
+                },
+                "status": "pending",
+                "attempts": 0,
+                "last_error": None,
+                "created_at": "2026-10-11T12:00:00Z",
+                "updated_at": "2026-10-11T12:00:00Z",
+            }
+        }
+    )
 
     id: UUID
     tenant_id: UUID
@@ -82,22 +105,18 @@ class NotificationRead(BaseResponse):
 class NotificationListFilters(BaseRequest):
     """Query parameters for GET /api/v1/notifications."""
 
-    status: NotificationStatus | None = Field(
-        default=None,
-        description="Filter by delivery status.",
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "status": "pending",
+                "channel": "email",
+                "limit": 20,
+                "offset": 0,
+            }
+        }
     )
-    channel: NotificationChannel | None = Field(
-        default=None,
-        description="Filter by channel.",
-    )
-    limit: int = Field(
-        default=20,
-        ge=1,
-        le=100,
-        description="Page size (1..100).",
-    )
-    offset: int = Field(
-        default=0,
-        ge=0,
-        description="Records to skip.",
-    )
+
+    status: NotificationStatus | None = Field(default=None)
+    channel: NotificationChannel | None = Field(default=None)
+    limit: int = Field(default=20, ge=1, le=100)
+    offset: int = Field(default=0, ge=0)

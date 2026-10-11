@@ -33,38 +33,47 @@ class ResponseMeta(BaseModel):
 
 
 class ErrorDetail(BaseModel):
-    """
-    A single field-level error.
+    """A single field-level error."""
 
-    Used mainly for validation errors, where multiple fields
-    may fail at once.
-    """
-
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "field": "body.title",
+                "code": "string_too_short",
+                "message": "String should have at least 1 character",
+            }
+        },
+    )
 
     field: str | None = Field(
-        default=None,
-        description="Dot-path to the offending field, e.g. 'channel.token'.",
+        default=None, description="Dot-path to the offending field."
     )
-    code: str | None = Field(
-        default=None,
-        description="Machine-readable sub-code, e.g. 'string_too_short'.",
-    )
+    code: str | None = Field(default=None, description="Machine-readable sub-code.")
     message: str = Field(description="Human-readable description of the problem.")
 
 
 class ErrorBody(BaseModel):
     """The `error` object of an ErrorResponse."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "code": "USER_NOT_FOUND",
+                "message": "User 'alice' not found.",
+                "details": None,
+            }
+        },
+    )
 
     code: str = Field(
         description="Stable, machine-readable error code (SCREAMING_SNAKE_CASE).",
-        examples=["NOTIFICATION_NOT_FOUND", "VALIDATION_ERROR"],
+        examples=["USER_NOT_FOUND", "VALIDATION_ERROR"],
     )
     message: str = Field(
         description="Human-readable message. May change over time; do not branch on it.",
-        examples=["Notification with id 'abc' was not found."],
+        examples=["User 'alice' not found."],
     )
     details: list[ErrorDetail] | None = Field(
         default=None,
@@ -85,7 +94,23 @@ class SuccessResponse[T](BaseModel):
 class ErrorResponse(BaseModel):
     """Envelope for error responses. Also used as OpenAPI documentation model."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "success": False,
+                "error": {
+                    "code": "USER_NOT_FOUND",
+                    "message": "User 'alice' not found.",
+                    "details": None,
+                },
+                "meta": {
+                    "timestamp": "2026-10-11T12:00:00Z",
+                    "request_id": "f0468f6b-cd9f-46bb-b87d-3cefdc1c0be6",
+                },
+            }
+        },
+    )
 
     success: bool = Field(default=False, frozen=True)
     error: ErrorBody
@@ -95,22 +120,20 @@ class ErrorResponse(BaseModel):
 class ValidationErrorDetail(BaseModel):
     """Single field-level validation error."""
 
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "field": "body.external_id",
+                "code": "string_too_short",
+                "message": "String should have at least 1 character",
+            }
+        },
+    )
 
-    field: str | None = Field(
-        default=None,
-        description="Dot-path to the offending field, e.g., 'body.title'.",
-        examples=["str"],
-    )
-    code: str | None = Field(
-        default=None,
-        description="Machine-readable sub-code.",
-        examples=["str"],
-    )
-    message: str = Field(
-        description="Human-readable description.",
-        examples=["str"],
-    )
+    field: str | None = Field(default=None)
+    code: str | None = Field(default=None)
+    message: str = Field(description="Human-readable description.")
 
 
 class ValidationErrorBody(BaseModel):
@@ -133,12 +156,31 @@ class ValidationErrorBody(BaseModel):
 
 
 class ValidationErrorResponse(BaseModel):
-    """Envelope for 422 validation errors.
+    """Envelope for 422 validation errors."""
 
-    Used in OpenAPI docs to give clear examples.
-    """
-
-    model_config = ConfigDict(frozen=True)
+    model_config = ConfigDict(
+        frozen=True,
+        json_schema_extra={
+            "example": {
+                "success": False,
+                "error": {
+                    "code": "VALIDATION_ERROR",
+                    "message": "Request data failed validation.",
+                    "details": [
+                        {
+                            "field": "body.external_id",
+                            "code": "string_too_short",
+                            "message": "String should have at least 1 character",
+                        }
+                    ],
+                },
+                "meta": {
+                    "timestamp": "2026-10-11T12:00:00Z",
+                    "request_id": "f0468f6b-cd9f-46bb-b87d-3cefdc1c0be6",
+                },
+            }
+        },
+    )
 
     success: bool = Field(default=False, frozen=True)
     error: ValidationErrorBody

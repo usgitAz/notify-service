@@ -20,6 +20,7 @@ services:
       - .env.dev
     environment:
       DEBUG: "true"
+    restart: unless-stopped
     volumes:
       # Mount source for hot-reload
       - ./app:/app/app:ro
@@ -45,7 +46,7 @@ services:
       - .env.dev
     command: alembic upgrade head
     restart: "no"
-    profiles: ["migrate"] # use to run this service with docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile migrate up
+    profiles: [ "migrate" ] # use to run this service with docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile migrate up
     depends_on:
       db:
         condition: service_healthy
@@ -86,9 +87,9 @@ services:
       - "5433:5432"
     networks:
       - backend
-    profiles: ["test"] #docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile test up -d db-test
+    profiles: [ "test" ] #docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile test up -d db-test
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U user -d notif_test"]
+      test: [ "CMD-SHELL", "pg_isready -U user -d notif_test" ]
       interval: 3s
       timeout: 3s
       retries: 5
