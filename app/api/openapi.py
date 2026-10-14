@@ -175,6 +175,7 @@ RESPONSES_UNAVAILABLE = ready_unavailable_response()
 
 # openapi tags
 tags_metadata = [
+    {"name": "auth", "description": "Authenticate and inspect the current tenant."},
     {"name": "health", "description": "Liveness and readiness probes for monitoring."},
     {
         "name": "users",

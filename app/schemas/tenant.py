@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from app.schemas.base import BaseRequest, BaseResponse
 
@@ -28,6 +28,18 @@ class TenantRead(BaseResponse):
     Note: `api_key_hash` is intentionally omitted.
     """
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "id": "c1a2b3d4-e5f6-7890-abcd-ef1234567890",
+                "name": "Shop X",
+                "api_key_prefix": "sk_live_Xy9k7aON",
+                "is_active": True,
+                "created_at": "2026-10-14T08:00:00Z",
+                "updated_at": "2026-10-14T08:00:00Z",
+            }
+        }
+    )
     id: UUID
     name: str
     api_key_prefix: str

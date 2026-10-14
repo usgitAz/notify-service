@@ -243,6 +243,11 @@ Success envelope:
 | `GET` | `/health` | Liveness |
 | `GET` | `/health/ready` | Readiness (includes DB) |
 
+### Tenant
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/v1/auth/me` | Return the tenant owning the API key |
+
 ### Users
 
 | Method | Path | Description |
