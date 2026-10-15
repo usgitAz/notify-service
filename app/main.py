@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.exception_handlers import register_exception_handlers
 from app.api.openapi import tags_metadata
@@ -17,8 +18,17 @@ app = FastAPI(
     openapi_tags=tags_metadata,
 )
 
-# middlewares
+# Middleware order: last added = outermost (runs first).
+# CORS must be outermost so preflight OPTIONS is answered before other middleware.
 app.add_middleware(RequestIDMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.effective_cors_origins,
+    allow_credentials=settings.effective_cors_allow_credentials,
+    allow_methods=settings.cors_allow_methods,
+    allow_headers=settings.cors_allow_headers,
+    max_age=settings.cors_max_age,
+)
 
 register_exception_handlers(app)
 

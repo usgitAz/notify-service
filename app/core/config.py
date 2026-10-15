@@ -89,6 +89,49 @@ class Settings(BaseSettings):
             f"@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
         )
 
+    # CORS
+    cors_origins: list[str] = Field(
+        default_factory=list,
+        description=(
+            "Allowed CORS origins (e.g. ['https://app.example.com']). "
+            "When debug=True this is ignored and all origins are allowed."
+        ),
+    )
+    cors_allow_credentials: bool = Field(
+        default=True,
+        description="Allow credentials (cookies). Forced False when origins is '*'.",
+    )
+    cors_allow_methods: list[str] = Field(
+        default_factory=lambda: ["*"],
+        description="Allowed HTTP methods for CORS.",
+    )
+    cors_allow_headers: list[str] = Field(
+        default_factory=lambda: ["*"],
+        description="Allowed request headers for CORS.",
+    )
+    cors_max_age: int = Field(
+        default=600,
+        description="Seconds browsers may cache preflight (OPTIONS) responses.",
+    )
+
+    @property
+    def effective_cors_origins(self) -> list[str]:
+        """Origins passed to CORSMiddleware. Wildcard in debug for DX."""
+        if self.debug:
+            return ["*"]
+        return self.cors_origins
+
+    @property
+    def effective_cors_allow_credentials(self) -> bool:
+        """
+        Browsers reject Access-Control-Allow-Origin: * with credentials.
+        Force False whenever we effectively allow all origins.
+        """
+        origins = self.effective_cors_origins
+        if not origins or origins == ["*"] or "*" in origins:
+            return False
+        return self.cors_allow_credentials
+
 
 @lru_cache
 def get_settings() -> Settings:
