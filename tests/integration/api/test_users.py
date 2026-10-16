@@ -88,9 +88,10 @@ class TestUpdateUser:
         assert r.status_code == 200
         assert r.json()["data"]["is_active"] is False
 
-        # Should be 404 now (inactive users are filtered)
+        # Soft-deleted user is still readable (is_active=false)
         r = await client.get("/api/v1/users/toggle", headers=auth_headers)
-        assert r.status_code == 404
+        assert r.status_code == 200
+        assert r.json()["data"]["is_active"] is False
 
         # Reactivate via PATCH
         r = await client.patch(

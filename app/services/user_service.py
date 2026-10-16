@@ -59,7 +59,27 @@ class UserService:
         tenant: Tenant,
         external_id: str,
     ) -> User:
-        """Fetch an active user by external_id, or raise NotFoundError."""
+        """
+        Fetch a user by external_id (active or inactive).
+
+        Soft-deleted users are returned with is_active=False so admin
+        clients can inspect and reactivate them. 404 only when no row exists.
+        """
+        user = await self.repo.get_by_external_id_any(session, tenant.id, external_id)
+        if user is None:
+            raise NotFoundError(
+                f"User '{external_id}' not found.",
+                code="USER_NOT_FOUND",
+            )
+        return user
+
+    async def get_active_by_external_id(
+        self,
+        session: AsyncSession,
+        tenant: Tenant,
+        external_id: str,
+    ) -> User:
+        """Fetch an active user only. Used by device registration and send flows."""
         user = await self.repo.get_by_external_id(session, tenant.id, external_id)
         if user is None:
             raise NotFoundError(

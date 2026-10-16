@@ -65,22 +65,52 @@ class TestUserServiceCreate:
 
 @pytest.mark.unit
 class TestUserServiceGet:
-    async def test_returns_user(self, service, fake_tenant, monkeypatch):
+    async def test_returns_active_user(self, service, fake_tenant, monkeypatch):
+        user = User(tenant_id=fake_tenant.id, external_id="ali")
+        user.is_active = True
+        monkeypatch.setattr(
+            service.repo, "get_by_external_id_any", AsyncMock(return_value=user)
+        )
+        result = await service.get_by_external_id(AsyncMock(), fake_tenant, "ali")
+        assert result is user
+
+    async def test_returns_inactive_user(self, service, fake_tenant, monkeypatch):
+        user = User(tenant_id=fake_tenant.id, external_id="ali")
+        user.is_active = False
+        monkeypatch.setattr(
+            service.repo, "get_by_external_id_any", AsyncMock(return_value=user)
+        )
+        result = await service.get_by_external_id(AsyncMock(), fake_tenant, "ali")
+        assert result is user
+        assert result.is_active is False
+
+    async def test_not_found(self, service, fake_tenant, monkeypatch):
+        monkeypatch.setattr(
+            service.repo, "get_by_external_id_any", AsyncMock(return_value=None)
+        )
+        with pytest.raises(NotFoundError):
+            await service.get_by_external_id(AsyncMock(), fake_tenant, "missing")
+
+
+@pytest.mark.unit
+class TestUserServiceGetActive:
+    async def test_returns_active(self, service, fake_tenant, monkeypatch):
         user = User(tenant_id=fake_tenant.id, external_id="ali")
         monkeypatch.setattr(
             service.repo, "get_by_external_id", AsyncMock(return_value=user)
         )
-        session = AsyncMock()
-        result = await service.get_by_external_id(session, fake_tenant, "ali")
+        result = await service.get_active_by_external_id(
+            AsyncMock(), fake_tenant, "ali"
+        )
         assert result is user
 
-    async def test_not_found(self, service, fake_tenant, monkeypatch):
+    async def test_inactive_is_not_found(self, service, fake_tenant, monkeypatch):
+        # repo active-only returns None for inactive
         monkeypatch.setattr(
             service.repo, "get_by_external_id", AsyncMock(return_value=None)
         )
-        session = AsyncMock()
         with pytest.raises(NotFoundError):
-            await service.get_by_external_id(session, fake_tenant, "missing")
+            await service.get_active_by_external_id(AsyncMock(), fake_tenant, "ali")
 
 
 @pytest.mark.unit

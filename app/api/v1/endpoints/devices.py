@@ -54,7 +54,7 @@ async def register_device(
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
 ) -> SuccessResponse[DeviceRead]:
-    user = await UserService().get_by_external_id(session, tenant, external_id)
+    user = await UserService().get_active_by_external_id(session, tenant, external_id)
     device = await DeviceService().register(session, user, request)
     await session.commit()
     return success_response(DeviceRead.model_validate(device), meta)
@@ -77,7 +77,7 @@ async def list_devices(
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
 ) -> SuccessResponse[list[DeviceRead]]:
-    user = await UserService().get_by_external_id(session, tenant, external_id)
+    user = await UserService().get_active_by_external_id(session, tenant, external_id)
     devices = await DeviceService().list_by_user(session, user)
     return success_response(
         [DeviceRead.model_validate(d) for d in devices],
