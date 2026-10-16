@@ -44,7 +44,7 @@ class UserCreate(BaseRequest):
 
 
 class UserRead(BaseResponse):
-    """Response request for a single User."""
+    """Response for a single User."""
 
     model_config = ConfigDict(
         json_schema_extra={
@@ -54,6 +54,7 @@ class UserRead(BaseResponse):
                 "external_id": "user_123",
                 "email": "user@example.com",
                 "is_active": True,
+                "deactivated_at": None,
                 "created_at": "2026-10-11T12:00:00Z",
                 "updated_at": "2026-10-11T12:00:00Z",
             }
@@ -65,6 +66,7 @@ class UserRead(BaseResponse):
     external_id: str
     email: str | None = None
     is_active: bool
+    deactivated_at: datetime | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -74,11 +76,10 @@ class UserUpdate(BaseRequest):
 
     model_config = ConfigDict(
         json_schema_extra={
-            "examples": [
-                {"email": "new@example.com"},
-                {"is_active": False},
-                {"email": "new@example.com", "is_active": True},
-            ]
+            "example": {
+                "email": "new@example.com",
+                "is_active": True,
+            }
         }
     )
 

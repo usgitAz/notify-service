@@ -92,6 +92,7 @@ class TestUpdateUser:
         r = await client.get("/api/v1/users/toggle", headers=auth_headers)
         assert r.status_code == 200
         assert r.json()["data"]["is_active"] is False
+        assert r.json()["data"]["deactivated_at"] is not None
 
         # Reactivate via PATCH
         r = await client.patch(
@@ -101,6 +102,7 @@ class TestUpdateUser:
         )
         assert r.status_code == 200
         assert r.json()["data"]["is_active"] is True
+        assert r.json()["data"]["deactivated_at"] is None
 
 
 @pytest.mark.integration
