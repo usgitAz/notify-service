@@ -71,7 +71,7 @@ class TestGetByToken:
 
 
 @pytest.mark.integration
-class TestListActiveByUser:
+class TestListByUser:
     async def test_returns_all(self, db_session, user):
         repo = DeviceRepository()
         for i in range(3):
@@ -85,36 +85,11 @@ class TestListActiveByUser:
             )
         await db_session.flush()
 
-        items = await repo.list_active_by_user(db_session, user.id)
+        items, total = await repo.list_by_user(db_session, user.id)
+        assert total == 3
         assert len(items) == 3
 
-    async def test_filter_by_platform(self, db_session, user):
-        repo = DeviceRepository()
-        db_session.add_all(
-            [
-                Device(
-                    user_id=user.id,
-                    platform=DevicePlatform.IOS,
-                    provider=PushProvider.FCM,
-                    token="ios-1",
-                ),
-                Device(
-                    user_id=user.id,
-                    platform=DevicePlatform.ANDROID,
-                    provider=PushProvider.FCM,
-                    token="android-1",
-                ),
-            ]
-        )
-        await db_session.flush()
-
-        items = await repo.list_active_by_user(
-            db_session, user.id, platform=DevicePlatform.IOS
-        )
-        assert len(items) == 1
-        assert items[0].platform == DevicePlatform.IOS
-
-    async def test_excludes_inactive(self, db_session, user):
+    async def test_excludes_inactive_by_default(self, db_session, user):
         repo = DeviceRepository()
         active = Device(
             user_id=user.id,
@@ -132,9 +107,48 @@ class TestListActiveByUser:
         db_session.add_all([active, inactive])
         await db_session.flush()
 
-        items = await repo.list_active_by_user(db_session, user.id)
-        assert len(items) == 1
+        items, total = await repo.list_by_user(db_session, user.id)
+        assert total == 1
         assert items[0].token == "active-tok"
+
+    async def test_include_inactive_when_none(self, db_session, user):
+        repo = DeviceRepository()
+        active = Device(
+            user_id=user.id,
+            platform=DevicePlatform.IOS,
+            provider=PushProvider.FCM,
+            token="active-tok",
+        )
+        inactive = Device(
+            user_id=user.id,
+            platform=DevicePlatform.IOS,
+            provider=PushProvider.FCM,
+            token="inactive-tok",
+        )
+        inactive.is_active = False
+        db_session.add_all([active, inactive])
+        await db_session.flush()
+
+        items, total = await repo.list_by_user(db_session, user.id, is_active=None)
+        assert total == 2
+        assert {d.token for d in items} == {"active-tok", "inactive-tok"}
+
+    async def test_pagination(self, db_session, user):
+        repo = DeviceRepository()
+        for i in range(3):
+            db_session.add(
+                Device(
+                    user_id=user.id,
+                    platform=DevicePlatform.IOS,
+                    provider=PushProvider.FCM,
+                    token=f"p{i}",
+                )
+            )
+        await db_session.flush()
+
+        items, total = await repo.list_by_user(db_session, user.id, limit=2, offset=0)
+        assert total == 3
+        assert len(items) == 2
 
 
 @pytest.mark.integration

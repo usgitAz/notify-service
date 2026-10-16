@@ -118,3 +118,21 @@ class UserService:
         await session.flush()
         await session.refresh(user)
         return user
+
+    async def list_by_tenant(
+        self,
+        session: AsyncSession,
+        tenant: Tenant,
+        *,
+        is_active: bool | None = None,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[User], int]:
+        """Paginated list of users for the tenant (newest first)."""
+        return await self.repo.list_by_tenant(
+            session,
+            tenant.id,
+            is_active=is_active,
+            limit=limit,
+            offset=offset,
+        )

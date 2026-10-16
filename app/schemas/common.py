@@ -15,7 +15,7 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import TypeVar
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 T = TypeVar("T")
 
@@ -137,3 +137,28 @@ class SuccessResponse[T](BaseModel):
     success: bool = Field(default=True, frozen=True)
     data: T
     meta: ResponseMeta
+
+
+class Page[T](BaseModel):
+    """
+    Paginated list payload for all list endpoints.
+
+    Used as SuccessResponse.data so the outer envelope stays identical.
+    """
+
+    model_config = ConfigDict(frozen=True)
+
+    items: list[T]
+    total: int = Field(ge=0, description="Total rows matching filters (before page).")
+    limit: int = Field(ge=1, le=100)
+    offset: int = Field(ge=0)
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def has_next(self) -> bool:
+        return self.offset + self.limit < self.total
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def has_prev(self) -> bool:
+        return self.offset > 0

@@ -1,13 +1,13 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_tenant, get_db
 from app.api.openapi import RESPONSES_AUTHENTICATED, error_response, responses
 from app.api.responses import ResponseMetaDep, success_response
 from app.infrastructure.db.models import Tenant
-from app.schemas.common import SuccessResponse
+from app.schemas.common import Page, SuccessResponse
 from app.schemas.device import DeviceCreate, DeviceRead, DeviceUpdate
 from app.services.device_service import DeviceService
 from app.services.user_service import UserService
@@ -62,25 +62,42 @@ async def register_device(
 
 @router.get(
     "/users/{external_id}/devices",
-    response_model=SuccessResponse[list[DeviceRead]],
+    response_model=SuccessResponse[Page[DeviceRead]],
     responses=error_response(
         404,
         code="USER_NOT_FOUND",
         message="User 'alice' not found.",
     ),
     summary="List a user's devices",
-    description="List all active devices of the given user.",
+    description="Paginated list of devices for the user (active only by default).",
 )
 async def list_devices(
     external_id: str,
     meta: ResponseMetaDep,
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
-) -> SuccessResponse[list[DeviceRead]]:
+    is_active: bool | None = Query(
+        default=True,
+        description="Filter by active status. Default true (active only). Pass null for all.",
+    ),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> SuccessResponse[Page[DeviceRead]]:
     user = await UserService().get_active_by_external_id(session, tenant, external_id)
-    devices = await DeviceService().list_by_user(session, user)
+    items, total = await DeviceService().list_by_user(
+        session,
+        user,
+        is_active=is_active,
+        limit=limit,
+        offset=offset,
+    )
     return success_response(
-        [DeviceRead.model_validate(d) for d in devices],
+        Page[DeviceRead](
+            items=[DeviceRead.model_validate(d) for d in items],
+            total=total,
+            limit=limit,
+            offset=offset,
+        ),
         meta,
     )
 

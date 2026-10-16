@@ -30,27 +30,25 @@ class UserRepository(BaseRepository[User]):
         session: AsyncSession,
         tenant_id: UUID,
         *,
+        is_active: bool | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> tuple[list[User], int]:
-        """List active users of a tenant with pagination."""
-        base = select(User).where(
-            User.tenant_id == tenant_id,
-            User.is_active.is_(True),
-        )
-
-        # total count (separate query, no limit)
+        """List users of a tenant with optional is_active filter and pagination."""
         from sqlalchemy import func
+
+        conditions = [User.tenant_id == tenant_id]
+        if is_active is not None:
+            conditions.append(User.is_active.is_(is_active))
+
+        base = select(User).where(*conditions)
 
         count_stmt = select(func.count()).select_from(base.subquery())
         total = await session.scalar(count_stmt) or 0
 
-        # data
         stmt = base.order_by(User.created_at.desc()).limit(limit).offset(offset)
         result = await session.scalars(stmt)
-        items = list(result)
-
-        return items, total
+        return list(result), total
 
     async def get_by_external_id_any(
         self,

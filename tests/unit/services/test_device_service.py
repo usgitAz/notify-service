@@ -89,13 +89,22 @@ class TestDeviceServiceRegister:
 @pytest.mark.unit
 class TestDeviceServiceList:
     async def test_list_calls_repo(self, service, fake_user, monkeypatch):
-        expected = [MagicMock(), MagicMock()]
-        mock = AsyncMock(return_value=expected)
-        monkeypatch.setattr(service.repo, "list_active_by_user", mock)
+        devices = [MagicMock()]
+        mock = AsyncMock(return_value=(devices, 1))
+        monkeypatch.setattr(service.repo, "list_by_user", mock)
         session = AsyncMock()
-        result = await service.list_by_user(session, fake_user)
-        assert result == expected
-        mock.assert_awaited_once_with(session, fake_user.id)
+
+        items, total = await service.list_by_user(session, fake_user)
+
+        assert items is devices
+        assert total == 1
+        mock.assert_awaited_once_with(
+            session,
+            fake_user.id,
+            is_active=True,
+            limit=20,
+            offset=0,
+        )
 
 
 @pytest.mark.unit

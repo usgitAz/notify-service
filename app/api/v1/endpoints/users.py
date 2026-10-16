@@ -1,11 +1,11 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_tenant, get_db
 from app.api.openapi import RESPONSES_AUTHENTICATED, error_response
 from app.api.responses import ResponseMetaDep, success_response
 from app.infrastructure.db.models import Tenant
-from app.schemas.common import SuccessResponse
+from app.schemas.common import Page, SuccessResponse
 from app.schemas.user import UserCreate, UserRead, UserUpdate
 from app.services.user_service import UserService
 
@@ -45,6 +45,44 @@ async def create_user(
     user = await service.create(session, tenant, request)
     await session.commit()
     return success_response(UserRead.model_validate(user), meta)
+
+
+@router.get(
+    "",
+    response_model=SuccessResponse[Page[UserRead]],
+    summary="List users",
+    description=(
+        "Paginated list of users for the authenticated tenant, newest first. "
+        "Includes soft-deleted users unless filtered with `is_active`."
+    ),
+)
+async def list_users(
+    meta: ResponseMetaDep,
+    tenant: Tenant = Depends(get_current_tenant),
+    session: AsyncSession = Depends(get_db),
+    is_active: bool | None = Query(
+        default=None,
+        description="Filter by active status. Omit to return all users.",
+    ),
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> SuccessResponse[Page[UserRead]]:
+    items, total = await UserService().list_by_tenant(
+        session,
+        tenant,
+        is_active=is_active,
+        limit=limit,
+        offset=offset,
+    )
+    return success_response(
+        Page[UserRead](
+            items=[UserRead.model_validate(u) for u in items],
+            total=total,
+            limit=limit,
+            offset=offset,
+        ),
+        meta,
+    )
 
 
 @router.get(

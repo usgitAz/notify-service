@@ -180,3 +180,26 @@ class TestUserServiceUpdate:
             await service.update(
                 session, fake_tenant, "missing", UserUpdate(email="x@y.com")
             )
+
+
+@pytest.mark.unit
+class TestUserServiceList:
+    async def test_delegates_to_repo(self, service, fake_tenant, monkeypatch):
+        users = [User(tenant_id=fake_tenant.id, external_id="a")]
+        mock = AsyncMock(return_value=(users, 1))
+        monkeypatch.setattr(service.repo, "list_by_tenant", mock)
+        session = AsyncMock()
+
+        items, total = await service.list_by_tenant(
+            session, fake_tenant, is_active=True, limit=10, offset=5
+        )
+
+        assert items is users
+        assert total == 1
+        mock.assert_awaited_once_with(
+            session,
+            fake_tenant.id,
+            is_active=True,
+            limit=10,
+            offset=5,
+        )

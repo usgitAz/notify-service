@@ -138,7 +138,11 @@ class TestListAndGet:
     async def test_list_empty(self, client: AsyncClient, auth_headers: dict):
         response = await client.get("/api/v1/notifications/", headers=auth_headers)
         assert response.status_code == 200
-        assert response.json()["data"] == []
+        data = response.json()["data"]
+        assert data["items"] == []
+        assert data["total"] == 0
+        assert data["has_next"] is False
+        assert data["has_prev"] is False
 
     async def test_list_with_items(
         self,
@@ -152,7 +156,9 @@ class TestListAndGet:
             json={"user_id": user.external_id, "subject": "s", "body": "b"},
         )
         response = await client.get("/api/v1/notifications/", headers=auth_headers)
-        assert len(response.json()["data"]) == 1
+        data = response.json()["data"]
+        assert len(data["items"]) == 1
+        assert data["total"] == 1
 
     async def test_list_filter_channel(
         self,
@@ -165,11 +171,12 @@ class TestListAndGet:
             headers=auth_headers,
             json={"user_id": user.external_id, "subject": "s", "body": "b"},
         )
-        # Filter by push → empty
         response = await client.get(
             "/api/v1/notifications/?channel=push", headers=auth_headers
         )
-        assert response.json()["data"] == []
+        data = response.json()["data"]
+        assert data["items"] == []
+        assert data["total"] == 0
 
     async def test_get_notification(
         self,

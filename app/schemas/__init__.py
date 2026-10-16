@@ -7,6 +7,7 @@ from app.schemas.common import (
     ErrorBody,
     ErrorDetail,
     ErrorResponse,
+    Page,
     ResponseMeta,
     SuccessResponse,
 )
@@ -30,6 +31,7 @@ __all__ = [
     "ErrorBody",
     "ErrorDetail",
     "ResponseMeta",
+    "Page",
     # Tenant
     "TenantCreate",
     "TenantRead",

@@ -67,9 +67,19 @@ class DeviceService:
         self,
         session: AsyncSession,
         user: User,
-    ) -> list[Device]:
-        """List all active devices of a user."""
-        return await self.repo.list_active_by_user(session, user.id)
+        *,
+        is_active: bool | None = True,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[Device], int]:
+        """Paginated list of devices for a user."""
+        return await self.repo.list_by_user(
+            session,
+            user.id,
+            is_active=is_active,
+            limit=limit,
+            offset=offset,
+        )
 
     async def get_by_id(
         self,

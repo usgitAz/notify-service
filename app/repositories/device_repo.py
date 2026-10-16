@@ -3,7 +3,7 @@ from uuid import UUID
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.infrastructure.db.models import Device, DevicePlatform, User
+from app.infrastructure.db.models import Device, User
 from app.repositories.base import BaseRepository
 
 
@@ -46,23 +46,33 @@ class DeviceRepository(BaseRepository[Device]):
         result = await session.scalars(stmt)
         return result.first()
 
-    async def list_active_by_user(
+    async def list_by_user(
         self,
         session: AsyncSession,
         user_id: UUID,
         *,
-        platform: DevicePlatform | None = None,
-    ) -> list[Device]:
-        """List active devices of a user, optionally filtered by platform."""
-        stmt = select(Device).where(
-            Device.user_id == user_id,
-            Device.is_active.is_(True),
-        )
-        if platform is not None:
-            stmt = stmt.where(Device.platform == platform)
-        stmt = stmt.order_by(Device.created_at.desc())
+        is_active: bool | None = True,
+        limit: int = 20,
+        offset: int = 0,
+    ) -> tuple[list[Device], int]:
+        """
+        List devices of a user with pagination.
+
+        Default is_active=True preserves previous API behavior (active only).
+        Pass is_active=None for all devices.
+        """
+        conditions = [Device.user_id == user_id]
+        if is_active is not None:
+            conditions.append(Device.is_active.is_(is_active))
+
+        base = select(Device).where(*conditions)
+
+        count_stmt = select(func.count()).select_from(base.subquery())
+        total = await session.scalar(count_stmt) or 0
+
+        stmt = base.order_by(Device.created_at.desc()).limit(limit).offset(offset)
         result = await session.scalars(stmt)
-        return list(result)
+        return list(result), total
 
     async def count_active_by_user(
         self,

@@ -144,3 +144,106 @@ class TestCrossTenantIsolation:
         # Empty external_id in URL → 404 or validation
         response = await client.get("/api/v1/users/%20", headers=auth_headers)
         assert response.status_code in (404, 422)
+
+
+@pytest.mark.integration
+class TestListUsers:
+    async def test_list_empty(self, client: AsyncClient, auth_headers):
+        r = await client.get("/api/v1/users", headers=auth_headers)
+        assert r.status_code == 200
+        data = r.json()["data"]
+        assert data["items"] == []
+        assert data["total"] == 0
+        assert data["limit"] == 20
+        assert data["offset"] == 0
+        assert data["has_next"] is False
+        assert data["has_prev"] is False
+
+    async def test_list_returns_users(self, client: AsyncClient, auth_headers):
+        await client.post(
+            "/api/v1/users",
+            headers=auth_headers,
+            json={"external_id": "u1", "email": "a@x.com"},
+        )
+        await client.post(
+            "/api/v1/users",
+            headers=auth_headers,
+            json={"external_id": "u2", "email": "b@x.com"},
+        )
+        r = await client.get("/api/v1/users", headers=auth_headers)
+        assert r.status_code == 200
+        data = r.json()["data"]
+        assert data["total"] == 2
+        assert len(data["items"]) == 2
+        assert {u["external_id"] for u in data["items"]} == {"u1", "u2"}
+
+    async def test_list_includes_inactive(self, client: AsyncClient, auth_headers):
+        await client.post(
+            "/api/v1/users",
+            headers=auth_headers,
+            json={"external_id": "gone", "email": "g@x.com"},
+        )
+        await client.patch(
+            "/api/v1/users/gone",
+            headers=auth_headers,
+            json={"is_active": False},
+        )
+        r = await client.get("/api/v1/users", headers=auth_headers)
+        assert r.status_code == 200
+        by_id = {u["external_id"]: u for u in r.json()["data"]["items"]}
+        assert by_id["gone"]["is_active"] is False
+        assert by_id["gone"]["deactivated_at"] is not None
+
+    async def test_filter_active_only(self, client: AsyncClient, auth_headers):
+        await client.post(
+            "/api/v1/users",
+            headers=auth_headers,
+            json={"external_id": "live", "email": "l@x.com"},
+        )
+        await client.post(
+            "/api/v1/users",
+            headers=auth_headers,
+            json={"external_id": "dead", "email": "d@x.com"},
+        )
+        await client.patch(
+            "/api/v1/users/dead",
+            headers=auth_headers,
+            json={"is_active": False},
+        )
+        r = await client.get(
+            "/api/v1/users",
+            headers=auth_headers,
+            params={"is_active": True},
+        )
+        ids = {u["external_id"] for u in r.json()["data"]["items"]}
+        assert "live" in ids
+        assert "dead" not in ids
+
+    async def test_pagination(self, client: AsyncClient, auth_headers):
+        for i in range(3):
+            await client.post(
+                "/api/v1/users",
+                headers=auth_headers,
+                json={"external_id": f"p{i}", "email": f"p{i}@x.com"},
+            )
+        r = await client.get(
+            "/api/v1/users",
+            headers=auth_headers,
+            params={"limit": 2, "offset": 0},
+        )
+        assert r.status_code == 200
+        data = r.json()["data"]
+        assert len(data["items"]) == 2
+        assert data["total"] == 3
+        assert data["has_next"] is True
+        assert data["has_prev"] is False
+
+        r2 = await client.get(
+            "/api/v1/users",
+            headers=auth_headers,
+            params={"limit": 2, "offset": 2},
+        )
+        data2 = r2.json()["data"]
+        assert len(data2["items"]) == 1
+        assert data2["has_next"] is False
+        assert data2["has_prev"] is True

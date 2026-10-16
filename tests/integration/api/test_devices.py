@@ -62,21 +62,15 @@ class TestRegisterDevice:
         )
         assert response.status_code == 404
 
-
-@pytest.mark.integration
-class TestListDevices:
-    async def test_empty(
-        self,
-        client: AsyncClient,
-        auth_headers: dict,
-        user: User,
-    ):
+    async def test_empty(self, client: AsyncClient, auth_headers: dict, user: User):
         response = await client.get(
             f"/api/v1/users/{user.external_id}/devices",
             headers=auth_headers,
         )
         assert response.status_code == 200
-        assert response.json()["data"] == []
+        data = response.json()["data"]
+        assert data["items"] == []
+        assert data["total"] == 0
 
     async def test_after_register(
         self,
@@ -93,8 +87,9 @@ class TestListDevices:
             f"/api/v1/users/{user.external_id}/devices",
             headers=auth_headers,
         )
-        assert response.status_code == 200
-        assert len(response.json()["data"]) == 1
+        data = response.json()["data"]
+        assert len(data["items"]) == 1
+        assert data["total"] == 1
 
 
 @pytest.mark.integration

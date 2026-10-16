@@ -15,7 +15,7 @@ from app.infrastructure.db.models import (
     NotificationStatus,
     Tenant,
 )
-from app.schemas.common import SuccessResponse
+from app.schemas.common import Page, SuccessResponse
 from app.schemas.notification import NotificationRead
 from app.services.notification_service import NotificationService
 
@@ -45,10 +45,9 @@ def to_read(n) -> NotificationRead:
     )
 
 
-# GET /notifications
 @router.get(
     "/",
-    response_model=SuccessResponse[list[NotificationRead]],
+    response_model=SuccessResponse[Page[NotificationRead]],
     summary="List notifications",
     description="Paginated list of notifications across all channels, newest first.",
 )
@@ -60,9 +59,8 @@ async def list_notifications(
     channel: NotificationChannel | None = Query(default=None),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
-) -> SuccessResponse[list[NotificationRead]]:
-    service = NotificationService()
-    items, _total = await service.list_by_tenant(
+) -> SuccessResponse[Page[NotificationRead]]:
+    items, total = await NotificationService().list_by_tenant(
         session,
         tenant,
         status=status_filter,
@@ -70,7 +68,15 @@ async def list_notifications(
         limit=limit,
         offset=offset,
     )
-    return success_response([to_read(n) for n in items], meta)
+    return success_response(
+        Page[NotificationRead](
+            items=[to_read(n) for n in items],
+            total=total,
+            limit=limit,
+            offset=offset,
+        ),
+        meta,
+    )
 
 
 # GET /notifications/{notification_id}
