@@ -69,7 +69,11 @@ async def register_device(
         message="User 'alice' not found.",
     ),
     summary="List a user's devices",
-    description="Paginated list of devices for the user (active only by default).",
+    description=(
+        "Paginated list of devices for the user. "
+        "Omit `is_active` (or leave unset) to return all devices; "
+        "pass true/false to filter."
+    ),
 )
 async def list_devices(
     external_id: str,
@@ -77,8 +81,11 @@ async def list_devices(
     tenant: Tenant = Depends(get_current_tenant),
     session: AsyncSession = Depends(get_db),
     is_active: bool | None = Query(
-        default=True,
-        description="Filter by active status. Default true (active only). Pass null for all.",
+        default=None,
+        description=(
+            "Filter by active status. "
+            "Omit for all devices; true = active only; false = inactive only."
+        ),
     ),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),

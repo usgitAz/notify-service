@@ -62,10 +62,10 @@ class DeviceUpdate(BaseRequest):
 
     model_config = ConfigDict(
         json_schema_extra={
-            "examples": [
-                {"device_name": "Ali's iPhone"},
-                {"is_active": False},
-            ]
+            "example": {
+                "device_name": "Ali's iPhone",
+                "is_active": False,
+            }
         }
     )
 

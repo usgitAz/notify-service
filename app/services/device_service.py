@@ -68,7 +68,7 @@ class DeviceService:
         session: AsyncSession,
         user: User,
         *,
-        is_active: bool | None = True,
+        is_active: bool | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> tuple[list[Device], int]:

@@ -101,7 +101,7 @@ class TestDeviceServiceList:
         mock.assert_awaited_once_with(
             session,
             fake_user.id,
-            is_active=True,
+            is_active=None,
             limit=20,
             offset=0,
         )

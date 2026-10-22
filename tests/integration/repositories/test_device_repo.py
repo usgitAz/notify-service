@@ -89,7 +89,7 @@ class TestListByUser:
         assert total == 3
         assert len(items) == 3
 
-    async def test_excludes_inactive_by_default(self, db_session, user):
+    async def test_filter_active_only(self, db_session, user):
         repo = DeviceRepository()
         active = Device(
             user_id=user.id,
@@ -107,11 +107,11 @@ class TestListByUser:
         db_session.add_all([active, inactive])
         await db_session.flush()
 
-        items, total = await repo.list_by_user(db_session, user.id)
+        items, total = await repo.list_by_user(db_session, user.id, is_active=True)
         assert total == 1
         assert items[0].token == "active-tok"
 
-    async def test_include_inactive_when_none(self, db_session, user):
+    async def test_default_includes_inactive(self, db_session, user):
         repo = DeviceRepository()
         active = Device(
             user_id=user.id,
@@ -129,7 +129,7 @@ class TestListByUser:
         db_session.add_all([active, inactive])
         await db_session.flush()
 
-        items, total = await repo.list_by_user(db_session, user.id, is_active=None)
+        items, total = await repo.list_by_user(db_session, user.id)  # default None
         assert total == 2
         assert {d.token for d in items} == {"active-tok", "inactive-tok"}
 

@@ -51,7 +51,7 @@ class DeviceRepository(BaseRepository[Device]):
         session: AsyncSession,
         user_id: UUID,
         *,
-        is_active: bool | None = True,
+        is_active: bool | None = None,
         limit: int = 20,
         offset: int = 0,
     ) -> tuple[list[Device], int]:
