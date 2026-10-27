@@ -16,6 +16,7 @@
 [Architecture](#architecture) ·
 [Quick Start](#quick-start) ·
 [API](#api-overview) ·
+[Admin Panel](#admin-panel) ·
 [Development](#development) ·
 [Docker](#docker) ·
 [Testing](#testing--ci) ·
@@ -36,6 +37,18 @@ Notify Service is an MVP **Notification as a Service** platform. Tenants authent
 | **SMS** | **Future** |
 
 **Stack highlights:** Python 3.13 · FastAPI · SQLAlchemy 2 · PostgreSQL · Redis · Docker multi-stage ·
+
+---
+
+## Admin Panel
+
+A modern Flutter web admin panel is available for this service:
+
+**[Notify Panel](https://github.com/usgitAz/notify-panel)** — Official admin dashboard for managing users, devices, and notifications.
+
+- Built with Flutter + Clean Architecture + Riverpod
+- API Key authentication
+- Full support for Users, Devices, Email Notifications & Health monitoring
 
 ---
 
@@ -220,7 +233,7 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 ## API overview
 
-Base path: **`/api/v1`**
+Base path: **`/api/v1`**  
 Auth header: **`X-API-Key: sk_live_...`** (or `sk_test_...`)
 
 Success envelope:
@@ -244,6 +257,7 @@ Success envelope:
 | `GET` | `/health/ready` | Readiness (includes DB) |
 
 ### Tenant
+
 | Method | Path | Description |
 |--------|------|-------------|
 | `GET` | `/api/v1/auth/me` | Return the tenant owning the API key |
@@ -451,6 +465,12 @@ Path filters can skip docs-only changes via `paths-ignore` (e.g. `**.md`) on eac
 
 ---
 
+## Related Projects
+
+- **[Notify Panel](https://github.com/usgitAz/notify-panel)** — Official Flutter web admin panel for this service (Clean Architecture + Riverpod)
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
@@ -459,7 +479,7 @@ MIT — see [LICENSE](LICENSE).
 
 <div align="center">
 
-**[OpenAPI docs](http://localhost:8000/docs)** when running locally ·
+**[OpenAPI docs](http://localhost:8000/docs)** when running locally ·  
 Built with FastAPI & uv
 
 </div>
